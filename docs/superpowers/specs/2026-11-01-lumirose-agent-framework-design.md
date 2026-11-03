@@ -107,7 +107,7 @@ v1 默认不收集使用遥测。发布后的使用反馈通过用户问题、�
 |---|---|---|---|
 | FR-01 | P0 | 模型服务配置 | 调用方提供可复用的 OpenAI Java Client、模型名及服务端点/认证配置。Agent 通过 Chat Completions 调用模型。Client 和模型名缺失时，构建失败并给出可识别的框架错误。 |
 | FR-02 | P0 | 同步对话 | 调用方以 `conversationId` 和用户输入执行一次运行，获得最终文本 `String`。模型请求失败时抛出框架异常，并保留底层原因。 |
-| FR-03 | P0 | 类型化工具定义 | 每个工具具有唯一模型可见名称、用途描述、参数类和执行 lambda；工具定义 Builder 提供 `.name(...)`、`.description(...)`、`.args(Class<T>)` 和 `.execute(lambda)`。参数类用于生成工具参数 schema 和解析模型参数；无参数工具使用框架的 `EmptyArgs` 参数类。工具结果允许为任意对象，由框架序列化后交回模型。 |
+| FR-03 | P0 | 类型化工具接口 | 每个工具实现 `Tool<T extends ToolArgs>`，统一提供名称、描述、参数类型和执行方法；简单工具可通过 `Tool.of(...)` 工厂以 lambda 创建，复杂工具以类实现并通过构造器注入依赖。不公开独立的 `ToolDefinition` 或 `ToolExecutor`。 |
 | FR-04 | P0 | 统一工具注册 | 工具通过 `ToolRegistry` 管理；Builder 提供 `.add(tool)` 和 `.addAll(collection)`，支持逐个和批量添加。重复工具名称在注册时被拒绝。Agent 自动执行所有已注册工具，不要求调用方逐工具批准。 |
 | FR-05 | P0 | 工具执行流程 | 模型请求已注册工具时，框架按模型返回顺序执行，同轮工具之间串行。工具参数解析、工具查找或执行失败会立即终止运行，不自动重试，也不把错误反馈给模型。 |
 | FR-06 | P0 | 会话历史 | 运行按调用方传入的 `conversationId` 读取和追加历史。空会话首次运行时加入配置的系统提示词；已有会话不会因 Agent 配置改变而隐式改写。未配置仓储时使用线程安全内存仓储；调用方可实现持久化仓储。 |
@@ -117,7 +117,7 @@ v1 默认不收集使用遥测。发布后的使用反馈通过用户问题、�
 | FR-10 | P0 | 流式事件 | `stream` 返回 `Flux<AgentEvent>`。成功运行时事件包含文本增量、工具开始、工具完成和运行完成。工具事件仅包含工具名、调用 ID、状态和耗时，不包含参数或工具结果。 |
 | FR-11 | P0 | 流式错误与取消 | 模型、工具、参数解析或仓储失败通过 `onError` 传递框架异常，不另发错误事件；工具失败时不发送工具完成事件。取消订阅后尽力关闭当前模型流并跳过后续步骤；已开始的同步工具不保证可中断，消息提交按 FR-07 的取消边界处理。 |
 | FR-12 | P0 | 上下文窗口 | v1 不自动裁剪、摘要或压缩历史。上下文超限由服务端错误表现为框架模型调用异常，由调用方通过会话管理处理。 |
-| FR-13 | P0 | 基础文件工具 | 框架提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool`，每个工具均产出 `ToolDefinition<T extends ToolArgs>` 并通过 `ToolRegistry` 显式注册。文件操作限制在调用方配置的工作区内，所有路径和符号链接不得逃逸该边界。 |
+| FR-13 | P0 | 基础文件工具 | 框架提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool`，每个工具实现 `Tool<T extends ToolArgs>` 并通过 `ToolRegistry` 显式注册。文件操作限制在调用方配置的工作区内，所有路径和符号链接不得逃逸该边界。 |
 | FR-14 | P0 | PowerShell 命令工具 | 框架提供 `PowerShellTool`，执行非交互 PowerShell 命令并返回退出码、标准输出、标准错误、耗时和截断状态。工具不默认注册；调用方必须提供工作区和 PowerShell 可执行文件后显式注册，环境变量白名单、超时和输出限制使用安全默认值并允许配置。 |
 
 以下子需求与上表使用相同编号，均为 P0。命名和类型约束属于开发者接入契约，内部包结构与具体算法留给技术设计。
@@ -137,60 +137,105 @@ v1 默认不收集使用遥测。发布后的使用反馈通过用户问题、�
 - 模型返回工具调用时继续执行 FR-05，不把该轮工具调用误当成最终答案。
 - 只有得到最终答复且消息提交成功后，方法才返回最终文本；不得用“请求超时”“服务器异常”等普通文本代替失败异常。
 
-### FR-03：类型化工具定义
+### FR-03：类型化工具接口
 
-**定义主体与类型边界**
+**核心契约**
 
-- 每个工具由 `ToolDefinition<T extends ToolArgs>` 描述，参数类必须实现框架提供的 `ToolArgs` 接口。
-- `ToolArgs` 在 v1 中为标记接口，不要求实现执行方法；参数对象只负责承载参数，业务执行逻辑由独立 lambda 提供。
-- Builder 的 `.args(Class<T>)` 与 `.execute(ToolExecutor<T>)` 必须使用同一参数类型，开发者在 lambda 中直接访问类型化参数，不需要自行强制转换。
-- `ToolExecutor<T extends ToolArgs>` 接收一个 T，返回 `Object`，允许声明 `throws Exception`，业务调用中的受检异常无需由调用方额外包装。
+- 每个工具实现 `Tool<T extends ToolArgs>`，该接口是 v1 唯一的工具能力抽象，提供 `name()`、`description()`、`argsType()` 和 `execute(T args)`。
+- 参数类必须实现框架提供的 `ToolArgs` 接口。`ToolArgs` 在 v1 中为标记接口，不要求 schema 或执行方法；它用于约束工具输入类型并明确参数对象边界。
+- `argsType()` 返回 `Class<T>`，`execute(T)` 接收同一泛型 T。开发者在执行方法中直接访问类型化参数，不需要 Object 强制转换。
+- `execute(T)` 返回任意 `Object` 并允许声明 `throws Exception`。业务服务异常可以原样抛出，由框架统一转换为工具执行异常。
+- `ToolRegistry` 只依赖 `Tool<?>`；模型适配层从 `argsType()` 获得参数类型并解析 JSON，再将解析对象交给 `execute(T)`。
+- v1 不把 `ToolDefinition` 或独立 `ToolExecutor` 作为公开核心类型。工具的元数据和执行逻辑属于同一能力，不再通过额外值对象拆分。
+- 复杂工具应使用普通类实现 `Tool<T>`，通过构造器注入工作区、PowerShell 配置或业务服务依赖；工具对象不依赖 SDK 无参构造。
+- 简单工具可以使用静态工厂 `Tool.of(name, description, argsType, lambda)`。工厂返回一个隐藏实现，不引入第二套业务模型；如需声明式配置或测试替身，仍可直接实现 `Tool<T>`。
 
-**配置项与校验**
-
-| 配置项 | 必填 | 接入要求与校验 |
-|---|---|---|
-| `.name(String)` | 是 | 模型可见的调用名称；长度 1–64，只允许字母、数字、下划线和连字符。该名称独立于参数类名。 |
-| `.description(String)` | 是 | 非空白的工具用途说明，随工具定义发送给模型。 |
-| `.args(Class<T>)` | 是 | 非 null 的、实现 `ToolArgs` 的具体参数类；必须能生成参数 schema，并支持模型 JSON 参数到 Java 对象的映射。 |
-| `.execute(ToolExecutor<T>)` | 是 | 非 null 的同步执行器；接收解析后的参数对象，返回供模型消费的结果。 |
-
-- 缺少必填项或参数类无法生成受支持的 schema 时，工具定义构建失败；不得到第一次实际执行时才发现配置缺失。
-- 参数 schema 来自参数类，不要求用户手写 JSON Schema。字段描述可通过 Jackson 描述注解提供；同一字段的名称、类型和描述在 schema 和参数解析中必须保持一致。
-- 无参数工具仍必须调用 `.args(EmptyArgs.class)`；`EmptyArgs` 由框架提供并实现 `ToolArgs`，模型可见参数为不含业务字段的空对象。
-- 每次工具调用获得独立参数实例，不复用上一次调用的可变参数对象。
-- 执行器返回值按 JSON 序列化；字符串按 JSON 字符串编码，null 按 JSON null 编码。无法序列化的结果视为工具失败，不向模型发送不完整结果。
-- 参数 JSON 无法解析或不能映射到指定参数类型时，不调用执行器，运行立即失败。v1 不额外承诺 Bean Validation 或完整 JSON Schema 实例校验，业务值约束由工具执行器检查。
-
-**开发者接入示例（公共契约示意）**
+**公共接口示意**
 
 ```java
-public class WeatherArgs implements ToolArgs {
-    @JsonPropertyDescription("城市名称，例如北京")
-    public String city;
+public interface Tool<T extends ToolArgs> {
+    String name();
+    String description();
+    Class<T> argsType();
+    Object execute(T args) throws Exception;
 }
+```
 
-ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
-        .name("get_weather")
-        .description("查询指定城市的天气")
-        .args(WeatherArgs.class)
-        .execute(args -> weatherService.query(args.city))
-        .build();
+**配置与校验**
+
+| 契约项 | 必填 | 要求与校验 |
+|---|---|---|
+| `name()` | 是 | 模型可见的调用名称；长度 1–64，只允许字母、数字、下划线和连字符。名称独立于参数类和实现类名。 |
+| `description()` | 是 | 非空白说明，随工具定义发送给模型。 |
+| `argsType()` | 是 | 非 null 的具体参数类，参数类必须实现 `ToolArgs`，并能生成受支持的 JSON Schema、完成模型 JSON 到 Java 对象的映射。 |
+| `execute(T)` | 是 | 同步执行入口；接收已解析的类型化参数并返回供模型消费的结果。 |
+
+- `Tool.of(...)` 在创建时校验名称、描述、参数类型和 lambda 均非空，并校验名称格式。
+- 直接实现 `Tool<T>` 的工具在加入 `ToolRegistry` 时接受同样的元数据与 schema 校验；非法工具不能进入已构建的注册表。
+- 参数 schema 由 `argsType()` 指向的参数类生成，不要求用户手写 JSON Schema。字段描述可使用 Jackson 描述注解；同一字段在 schema 和解析中的名称、类型和描述必须一致。
+- 无参数工具仍须提供实现 `ToolArgs` 的参数类型，并使用框架提供的 `EmptyArgs`。模型可见参数为不含业务字段的空对象。
+- 每次调用必须获得独立的参数实例，不复用上一次调用中的可变参数对象。
+- 执行结果按 JSON 序列化；字符串按 JSON 字符串编码，null 按 JSON null 编码。无法序列化的结果视为工具失败。
+- 参数 JSON 无法解析或不能映射到 `argsType()` 指定类型时，不调用 `execute(T)`，当前运行立即失败。v1 不额外承诺 Bean Validation 或完整 JSON Schema 实例校验，业务值约束由工具执行方法检查。
+
+**接入示例**
+
+复杂工具通过类实现：
+
+```java
+public final class WeatherTool implements Tool<WeatherArgs> {
+    private final WeatherService weatherService;
+
+    public WeatherTool(WeatherService weatherService) {
+        this.weatherService = weatherService;
+    }
+
+    @Override
+    public String name() {
+        return "get_weather";
+    }
+
+    @Override
+    public String description() {
+        return "查询指定城市的天气";
+    }
+
+    @Override
+    public Class<WeatherArgs> argsType() {
+        return WeatherArgs.class;
+    }
+
+    @Override
+    public Object execute(WeatherArgs args) throws Exception {
+        return weatherService.query(args.city);
+    }
+}
+```
+
+轻量工具使用同一接口的静态工厂：
+
+```java
+Tool<WeatherArgs> weatherTool = Tool.of(
+        "get_weather",
+        "查询指定城市的天气",
+        WeatherArgs.class,
+        args -> weatherService.query(args.city)
+);
 ```
 
 ### FR-04：工具注册表
 
-- `ToolRegistry.builder().add(tool)` 添加单个 `ToolDefinition<?>`；`.addAll(collection)` 添加一组工具，两者支持混合链式使用。
+- `ToolRegistry.builder().add(tool)` 添加单个 `Tool<?>`；`.addAll(collection)` 添加一组工具，两者支持混合链式使用。
 - 添加 null 工具、null 集合或集合内包含 null 时，注册失败，并指出配置问题。
 - 工具名称大小写敏感；无论重复来自单个添加、同一批次还是多个批次，都必须被拒绝，不能静默覆盖已有工具。
 - `.build()` 后得到不可变注册表；修改原始工具集合或继续使用原 Builder，不得改变已构建的注册表。
-- Agent 通过 `.toolRegistry(registry)` 统一使用工具；同一工具定义可复用于不同 Agent，但调用方提供的执行器应能安全处理不同会话的并发调用。
+- Agent 通过 `.toolRegistry(registry)` 统一使用工具；同一 `Tool<?>` 实例可复用于不同 Agent，但该工具实现必须能安全处理不同会话的并发调用，或由调用方为共享状态提供同步。
 - 模型可见的名称和运行时查找名称必须一致，不从参数类名再次推导调用名称。
 
 ### FR-05：工具执行
 
 - 使用模型返回的工具名查找注册项，并使用该项的参数类解析参数。
-- 工具名不存在、参数无法解析、执行器异常、结果无法序列化时，立即终止运行；同轮尚未开始的工具不得继续执行。
+- 工具名不存在、参数无法解析、`execute(T)` 抛异常、结果无法序列化时，立即终止运行；同轮尚未开始的工具不得继续执行。
 - 每个工具结果必须保留原工具调用 ID，模型下一轮可以识别结果对应哪个调用。
 - 同轮工具依次执行，只有当前轮所有工具成功完成后，才请求模型继续答复。
 - 框架不自动重试工具；模型后续轮次再次请求某个工具时属于新的调用，仍受最大轮数约束。
@@ -230,7 +275,7 @@ ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
 
 **公共约定**
 
-- v1 提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool` 四个内置工具。每个工具通过统一的 `ToolDefinition<T extends ToolArgs>` 进入 `ToolRegistry`，参数类型分别实现 `ToolArgs`。
+- v1 提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool` 四个内置工具。每个工具实现统一的 `Tool<T extends ToolArgs>`，参数类型分别实现 `ToolArgs`，再通过 `ToolRegistry` 显式注册。
 - 四个工具共享一个必填的文件工具配置，配置提供已有的工作区根目录。所有路径参数必须是相对于工作区根目录的路径；空路径、绝对路径和解析后越界的路径均被拒绝。
 - 路径校验必须覆盖 `.`、`..` 和符号链接。已存在符号链接的目标必须位于工作区内；不存在的文件先校验其最近已存在父目录的真实路径。v1 不允许通过符号链接逃逸工作区。
 - 文件工具只处理 UTF-8 文本普通文件；目录、设备文件、二进制内容或其他编码不在 v1 保证范围内，并应以工具错误终止运行。
@@ -321,7 +366,7 @@ ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
 ## 11. 验收标准
 
 1. 在 Java 17 的干净 Maven 工程中，可按文档创建 Agent 并对模拟模型完成无工具同步对话。
-2. 使用类型化工具参数时，注册表能生成工具定义、解析参数、执行 lambda，并将结果序列化后继续模型对话。
+2. 使用类型化工具参数时，注册表能提供工具元数据、解析参数、调用类实现或 `Tool.of(...)` lambda，并将结果序列化后继续模型对话。
 3. 重复工具名、未注册工具、参数解析失败和工具抛异常均产生对应框架错误；工具失败不自动回传模型。
 4. 多工具响应按模型返回顺序串行执行，且工具调用 ID 与结果对应。
 5. 成功运行把本轮消息作为一次完整批次追加；各类失败和提交前取消均不留下半轮历史。
@@ -331,7 +376,7 @@ ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
 9. 默认自动化测试不读取 API Key、不访问真实模型服务；真实服务验证单独作为可选集成测试。
 10. SDK 升级验证覆盖工具 schema、参数解析、同步调用、流式累积和自定义 `baseUrl`。
 11. 默认错误消息、示例、测试和文档中没有真实凭据。
-12. 四个文件工具均通过 `ToolDefinition<T extends ToolArgs>` 注册，能够读取、创建、精确编辑和删除工作区内的 UTF-8 普通文件，并返回表格定义的结构化结果。
+12. 四个文件工具均实现 `Tool<T extends ToolArgs>` 并通过同一 `ToolRegistry` 注册，能够读取、创建、精确编辑和删除工作区内的 UTF-8 普通文件，并返回表格定义的结构化结果。
 13. 文件工具拒绝绝对路径、`..` 越界、指向工作区外的符号链接、目录和其他非普通文件；失败的写入或编辑不破坏原文件。
 14. `PowerShellTool` 未显式配置和注册时不可调用；显式注册后能够执行非交互命令，并返回退出码、标准输出、标准错误、耗时和截断标记。
 15. PowerShell 命令超时会终止进程，输出超限会截断并标记；子进程不继承未列入白名单的应用环境变量。
@@ -341,9 +386,9 @@ ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
 | 对应需求 | 验收场景与预期结果 |
 |---|---|
 | FR-01 / FR-02 | Client、模型、会话 ID 或输入无效时，在约定校验时机拒绝，不触发模型请求；未配置工具仍可普通对话。 |
-| FR-03 | 实现 `ToolArgs` 的参数类可用于 `ToolDefinition<T>`；未实现该接口的类在正常泛型使用下无法通过编译；执行器参数类型与 `.args(...)` 类型不一致时无法通过编译。 |
-| FR-03 | 缺少名称、描述、参数类型或执行器，非法工具名或不支持的参数 schema，均在构建阶段失败。 |
-| FR-03 | 自定义工具名不等于参数类名时，模型仍看到自定义名称且能正确调用；`EmptyArgs` 生成空对象 schema，执行器获得 `EmptyArgs` 实例。 |
+| FR-03 | 实现 `ToolArgs` 的参数类可用于 `Tool<T>`；未实现该接口的类在正常泛型使用下无法通过编译；`argsType()` 与 `execute(T)` 的参数类型不一致时无法通过编译。 |
+| FR-03 | 使用 `Tool.of(...)` 时缺少名称、描述、参数类型或 lambda、名称非法、参数 schema 不支持时立即失败；直接实现的工具在注册时以相同规则校验。 |
+| FR-03 | 自定义工具名不等于参数类名时，模型仍看到自定义名称且能正确调用；`EmptyArgs` 生成空对象 schema，`execute(T)` 获得 `EmptyArgs` 实例；类实现与 `Tool.of(...)` 工厂在注册和调用行为上一致。 |
 | FR-03 / FR-05 | 字符串、普通对象和 null 结果得到对应 JSON；参数解析失败不执行工具；序列化失败终止运行。 |
 | FR-04 | 单次添加、批量添加和交叉添加中的重名均被拒绝；null 输入被拒绝；构建后修改原集合不改变注册表。 |
 | FR-06 / FR-07 | 仓储读取空会话和快照符合约定；追加失败不留下部分消息；同步返回和运行完成事件必须晚于提交成功。 |
@@ -353,7 +398,7 @@ ToolDefinition<WeatherArgs> weatherTool = ToolDefinition.<WeatherArgs>builder()
 | FR-13 | `ReadTool` 能按行窗口读取并报告总行数与截断；`WriteTool` 仅按 `overwrite` 覆盖；`EditTool` 默认单一匹配且不使用正则；`DeleteTool` 只能删除普通文件。 |
 | FR-13 | 绝对路径、工作区外路径、`..` 越界和越界符号链接均被拒绝；写、编辑或删除失败时旧文件仍存在且内容不变。 |
 | FR-13 | 文件工具参数类均实现 `ToolArgs`，模型可见名称分别为 `read_file`、`write_file`、`edit_file`、`delete_file`，并可通过 `ToolRegistry.addAll(...)` 批量注册。 |
-| FR-14 | 缺少工作区或 PowerShell 可执行文件时，工具定义无法构建；未注册时模型不能调用；越界工作目录不会启动进程。 |
+| FR-14 | 缺少工作区或 PowerShell 可执行文件时，`PowerShellTool` 无法构造或注册；未注册时模型不能调用；越界工作目录不会启动进程。 |
 | FR-14 | 非 0 退出码仍返回退出码和输出；超时、启动失败和取消产生工具异常；输出截断保留前缀并明确标记；默认环境不包含测试注入的秘密变量。 |
 
 ## 12. 风险、依赖与假设
