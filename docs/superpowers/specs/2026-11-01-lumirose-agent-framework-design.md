@@ -1,4 +1,4 @@
-# Lumirose Agent Framework v1 产品需求文档
+# Lumirose v1 产品与技术设计
 
 ## 1. 文档信息
 
@@ -6,452 +6,522 @@
 |---|---|
 | 文档负责人 | Lumirose 项目组 |
 | 产品版本 | v1 |
-| 文档状态 | 方案已更新，待文档评审 |
-| 更新时间 | 2026-11-03 |
-| 目标运行环境 | Java 17+ |
+| 文档状态 | 待评审 |
+| 更新时间 | 2026-11-06 |
+| 运行环境 | Java 17+ |
 | 交付方式 | 可嵌入 Java 应用的 Maven 依赖 |
+| 模型协议 | DeepSeek Chat Completions，同步调用 |
 
-## 2. 概述与背景
+## 2. 背景与问题
 
-Lumirose 当前是一个基于 openai-java 的智能体 demo，已演示模型对话、工具调用、消息记忆和流式响应。项目发起人希望将其发展为可嵌入 Java 应用的智能体框架。
+Java 应用接入工具型智能体时，通常需要重复实现模型调用循环、工具定义与分发、消息历史和失败处理。当前 demo 已验证 DeepSeek Chat Completions 的同步调用和工具调用路径，但模型类型、消息类型、工具执行和仓储边界仍相互耦合，同步与流式实现也不一致。
 
-目前，调用方需要自行连接模型、维护多轮消息、识别并执行工具调用、把工具结果交回模型，并处理同步和流式路径。现有 demo 验证了基本流程，但配置边界、失败行为、并发规则和测试方式尚不足以作为稳定的复用契约。
+v1 将现有 demo 收敛为最小可用框架：直接调用 DeepSeek Chat Completions，提供类型化工具、同步 Agent、内存会话仓储和基础本地工具。
 
-v1 将提供通用单智能体能力，使用 Chat Completions 对接 OpenAI 官方及 OpenAI-compatible 服务，帮助 Java 开发者用统一的会话、工具和运行接口完成模型对话与工具执行。
+## 3. 目标与成功指标
 
-### 当前 demo 评估
+### 3.1 产品目标
 
-**已有基础**：Demo 已串起 Chat Completions、多轮工具调用、按会话保存消息、同步答复和流式答复；Agent、工具注册和仓储已经有初步边界，适合作为 v1 原型起点。
+- 让 Java 开发者通过 Maven 依赖嵌入一个通用单智能体。
+- 用少量稳定的核心类型完成工具定义、注册、执行和会话记忆。
+- 避免 openai-java 类型进入 Agent、Tool、Repository 等公共边界。
+- 让同步运行、工具失败、消息提交和并发行为可预测、可测试。
 
-**主要缺口**：工具参数/schema 与执行类耦合；SDK 消息类型进入 Agent 和仓储；内存仓储的可变数据缺少安全隔离；同步和流式路径的轮数上限及失败处理不一致；流里缺少工具生命周期事件；测试主要是 `main` 演示而非自动化断言；测试源码包含硬编码凭据，必须撤销轮换并清理。
+### 3.2 发布门槛
 
-## 3. 问题陈述
-
-Java 应用集成工具型智能体时，通常需要重复实现模型调用循环、工具分发、会话历史和流式事件处理。直接在业务代码中维护这些流程，会让业务逻辑与供应商 SDK 类型、消息格式和失败分支紧密耦合，也容易导致同步和流式实现行为不一致。
-
-当前 demo 已经证明这条流程可以工作，但尚未清楚约定工具如何描述、同一会话如何并发、失败运行是否保存半轮消息、工具生命周期如何暴露给流式调用方，以及如何在不访问真实模型服务的情况下验证运行时行为。
-
-## 4. 目标与成功指标
-
-### 4.1 产品目标
-
-1. 让 Java 开发者可以通过 Maven 依赖在应用中创建一个通用单智能体。
-2. 用统一的工具注册和会话接口隐藏重复的模型/工具循环。
-3. 提供简单同步调用和可观测的流式调用。
-4. 使成功、失败、轮数上限和取消行为明确且可测试。
-5. 保持 OpenAI 官方及 OpenAI-compatible Chat Completions 服务的接入方式。
-
-### 4.2 v1 发布成功标准
-
-| 指标 | 发布门槛 |
+| 指标 | 门槛 |
 |---|---|
-| 核心功能验收 | 所有 P0 验收用例通过，包括同步对话、工具调用、消息提交、失败和流式行为 |
-| 环境兼容 | 默认自动化测试在 Java 17 环境通过，不依赖真实 API Key |
-| 集成样例 | 从干净 Maven 工程按文档配置 Client、模型和用户输入，可完成一次模拟对话 |
-| 流程一致性 | 同步与流式运行对工具、轮数上限、提交和异常采用一致规则 |
-| 基础工具可用 | 四个文件工具可在受限工作区完成文本文件的读取、创建、精确编辑和删除；PowerShell 工具可显式启用并按配置执行、超时和截断输出 |
-| 凭据安全 | 源码、测试和文档不包含真实 API 凭据；已泄露凭据完成撤销和轮换 |
+| 核心功能 | 无工具对话、多轮工具调用、基础文件工具和 PowerShell 工具均通过验收 |
+| 自动化验证 | 默认测试不读取真实 API Key，使用 MockWebServer |
+| 接入体验 | 按文档配置 Client、Agent、ToolContext 后能运行同步示例 |
+| 行为一致性 | 成功、失败、轮数上限和同会话并发遵循统一规则 |
+| 安全 | 源码和文档不含真实凭据；日志和异常不泄露敏感内容 |
 
-v1 默认不收集使用遥测。发布后的使用反馈通过用户问题、缺陷报告和外部集成反馈衡量；如果后续选择 Maven Central 等发布渠道，可再评估下载量指标。
+v1 不默认发送遥测。
 
-## 5. 目标用户与使用场景
+## 4. 用户与场景
 
-### 目标用户
+目标用户是需要将 AI 对话或工具能力嵌入 Java 应用的开发者。
 
-- 将 AI 对话或工具能力嵌入现有 Java 应用的开发者；
-- 使用 OpenAI 官方或 OpenAI-compatible Chat Completions 服务的团队；
-- 希望自行提供业务工具和会话存储，但不想重复编写 Agent 执行循环的开发者。
+主要场景：
 
-### 典型场景
+1. **应用内问答**：按 conversationId 保存并延续上下文。
+2. **工具调用**：模型选择工具后，框架解析参数、执行工具并继续对话。
+3. **本地文件操作**：在受限工作区内读取、创建、编辑和删除文本文件。
+4. **命令执行**：应用显式启用 PowerShell 工具后，执行非交互命令。
+5. **自定义持久化**：简单应用使用内存仓储，生产应用实现仓储接口。
 
-1. **应用内问答**：用户输入问题，Agent 返回完整文本答案，并按会话 ID 延续上下文。
-2. **业务工具调用**：开发者注册天气、查询或业务服务工具；模型选择工具后，框架解析参数、执行工具并继续对话。
-3. **本地文件操作**：应用将 Agent 限制在一个工作区内，Agent 通过基础文件工具读取、创建、精确编辑和删除普通文件。
-4. **命令执行**：应用显式启用 PowerShell 工具后，Agent 可以运行非交互命令并把退出码、标准输出和标准错误返回模型。
-5. **实时文本呈现**：调用方订阅流，逐步展示文本，并观察工具开始、工具完成和运行完成状态。
-6. **持久化集成**：小型应用先使用内存仓储；生产应用实现仓储接口接入自有数据库。
+## 5. 范围与优先级
 
-## 6. 范围与优先级
-
-### P0：v1 必须交付
+### P0
 
 - Java 17+ Maven 依赖；
-- 通用单智能体；
-- Chat Completions，同一接入方式支持 OpenAI 官方和 OpenAI-compatible 服务；
-- 同步完整文本调用；
-- Reactor `Flux` 流式调用和文本/工具生命周期事件；
-- 类型化工具描述与统一 `ToolRegistry`；
-- 基础文件工具 `ReadTool`、`WriteTool`、`EditTool`、`DeleteTool`；
-- 显式启用的 `PowerShellTool`；
-- 会话 ID、消息仓储接口及线程安全内存实现；
-- 同会话串行、跨会话并行；
-- 失败不提交本轮消息、框架异常和流取消规则；
-- 不依赖真实模型服务的自动化测试。
+- DeepSeek Chat Completions 同步调用；
+- 单 Agent；
+- 类型化 Tool 和 ToolContext；
+- ChatMessage 消息模型；
+- 会话历史与原子提交；
+- 线程安全内存仓储；
+- ReadTool、WriteTool、EditTool、DeleteTool；
+- PowerShellTool；
+- 不依赖真实 API 的自动化测试。
 
-### 明确不做
+### 非目标
 
-- Responses API；
-- 多智能体、工作流编排和 RAG；
-- 内置数据库仓储；
-- 自动上下文裁剪或摘要；
+- 流式调用和 Reactor；
+- Responses API、Anthropic Messages API；
+- openai-java；
+- MySQL、ORM 或建表 SQL；
+- 多智能体、工作流、RAG；
+- 自动上下文裁剪；
 - 工具并行执行或人工审批；
-- 目录树遍历、递归目录删除和归档文件处理；
-- 基于容器的文件系统隔离或 PowerShell 安全沙箱；
-- 非 OpenAI-compatible 的独立供应商协议；
-- 独立 HTTP 服务；
-- 内置遥测和用户追踪。
+- 独立 HTTP 服务或遥测。
 
-## 7. 功能需求
+## 6. 功能需求
 
-| ID | 优先级 | 需求 | 预期行为与异常情况 |
-|---|---|---|---|
-| FR-01 | P0 | 模型服务配置 | 调用方提供可复用的 OpenAI Java Client、模型名及服务端点/认证配置。Agent 通过 Chat Completions 调用模型。Client 和模型名缺失时，构建失败并给出可识别的框架错误。 |
-| FR-02 | P0 | 同步对话 | 调用方以 `conversationId` 和用户输入执行一次运行，获得最终文本 `String`。模型请求失败时抛出框架异常，并保留底层原因。 |
-| FR-03 | P0 | 类型化工具接口 | 每个工具实现 `Tool<T extends ToolArgs>`，统一提供名称、描述、参数类型和执行方法；简单工具可通过 `Tool.of(...)` 工厂以 lambda 创建，复杂工具以类实现并通过构造器注入依赖。不公开独立的 `ToolDefinition` 或 `ToolExecutor`。 |
-| FR-04 | P0 | 统一工具注册 | 工具通过 `ToolRegistry` 管理；Builder 提供 `.add(tool)` 和 `.addAll(collection)`，支持逐个和批量添加。重复工具名称在注册时被拒绝。Agent 自动执行所有已注册工具，不要求调用方逐工具批准。 |
-| FR-05 | P0 | 工具执行流程 | 模型请求已注册工具时，框架按模型返回顺序执行，同轮工具之间串行。工具参数解析、工具查找或执行失败会立即终止运行，不自动重试，也不把错误反馈给模型。 |
-| FR-06 | P0 | 会话历史 | 运行按调用方传入的 `conversationId` 读取和追加历史。空会话首次运行时加入配置的系统提示词；已有会话不会因 Agent 配置改变而隐式改写。未配置仓储时使用线程安全内存仓储；调用方可实现持久化仓储。 |
-| FR-07 | P0 | 原子消息提交 | 当前运行的系统、用户、助手和工具消息先暂存；最终答复成功后一次性追加。模型/工具/解析失败、仓储失败或达到最大轮数时，不保存本轮消息；提交前观察到取消则跳过提交，已成功提交的批次不撤销。批量追加必须全有或全无。 |
-| FR-08 | P0 | 同会话并发规则 | 经同一 Agent 实例进入的同一会话调用按进入顺序串行处理；不同会话可以并行。不同 Agent 实例或进程共享同一会话时，调用方负责协调。 |
-| FR-09 | P0 | 最大模型轮数 | 调用方可设置正整数 `maxTurns`，默认值为 10。初始模型请求及工具结果后的请求都计入；到达上限仍未得到最终答复时，运行失败且不提交本轮消息。 |
-| FR-10 | P0 | 流式事件 | `stream` 返回 `Flux<AgentEvent>`。成功运行时事件包含文本增量、工具开始、工具完成和运行完成。工具事件仅包含工具名、调用 ID、状态和耗时，不包含参数或工具结果。 |
-| FR-11 | P0 | 流式错误与取消 | 模型、工具、参数解析或仓储失败通过 `onError` 传递框架异常，不另发错误事件；工具失败时不发送工具完成事件。取消订阅后尽力关闭当前模型流并跳过后续步骤；已开始的同步工具不保证可中断，消息提交按 FR-07 的取消边界处理。 |
-| FR-12 | P0 | 上下文窗口 | v1 不自动裁剪、摘要或压缩历史。上下文超限由服务端错误表现为框架模型调用异常，由调用方通过会话管理处理。 |
-| FR-13 | P0 | 基础文件工具 | 框架提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool`，每个工具实现 `Tool<T extends ToolArgs>` 并通过 `ToolRegistry` 显式注册。文件操作限制在调用方配置的工作区内，所有路径和符号链接不得逃逸该边界。 |
-| FR-14 | P0 | PowerShell 命令工具 | 框架提供 `PowerShellTool`，执行非交互 PowerShell 命令并返回退出码、标准输出、标准错误、耗时和截断状态。工具不默认注册；调用方必须提供工作区和 PowerShell 可执行文件后显式注册，环境变量白名单、超时和输出限制使用安全默认值并允许配置。 |
+| ID | 需求 | 可观察行为 |
+|---|---|---|
+| FR-01 | Client 配置 | baseUrl 和 apiKey 必填；v1 不提供 fromEnv、自定义 OkHttpClient 或 ObjectMapper 注入 |
+| FR-02 | 同步运行 | `LumiRoseAgent.run(conversationId, input)` 返回最终文本；模型错误抛出框架异常 |
+| FR-03 | 工具定义 | 工具实现 `Tool<T extends ToolArgs>`；简单工具可用 `Tool.of`，无参数工具使用 EmptyArgs |
+| FR-04 | 工具注册与执行 | ToolContext 拒绝重复名称和 null；按名称查找、解析参数并执行；失败立即终止运行 |
+| FR-05 | 多工具调用 | 同一轮的多个 ToolCall 按模型返回顺序串行执行；每个结果对应一条 ToolMessage |
+| FR-06 | 会话历史 | 按 conversationId 加载历史；空会话首次加入 system 消息；支持内存和自定义仓储 |
+| FR-07 | 消息提交 | 本轮消息暂存，最终成功才原子追加；任何失败或轮数超限均不提交本轮消息 |
+| FR-08 | 并发 | 同一 Agent 实例内同一会话串行，不同会话并行；Client 支持多会话并发 |
+| FR-09 | 轮数限制 | maxTurns 默认 10；初始请求和工具后的请求都计入 |
+| FR-10 | 文件工具 | 四个文件工具限制在工作区内，只处理 UTF-8 普通文件，失败不破坏原文件 |
+| FR-11 | PowerShell 工具 | 默认不注册；显式配置后非交互执行，限制超时、输出和环境变量 |
+| FR-12 | 错误与安全 | 统一框架异常；不记录 API Key、完整请求、工具参数或工具结果 |
 
-以下子需求与上表使用相同编号，均为 P0。命名和类型约束属于开发者接入契约，内部包结构与具体算法留给技术设计。
+## 7. 总体架构
 
-### FR-01：Agent 配置
+```mermaid
+flowchart TB
+    subgraph APP["应用与领域层"]
+        Agent["LumiRoseAgent"]
+        Context["ToolContext"]
+        Tool["Tool&lt;T extends ToolArgs&gt;"]
+        Args["ToolArgs / EmptyArgs"]
+        Message["ChatMessage"]
+        ToolCall["ToolCall"]
+        Repository["MessageRepository"]
+        MemoryRepo["InMemoryMessageRepository"]
+    end
 
-- 通过 `LumiRoseAgent.builder()` 配置 `.client(...)`、`.model(...)`、`.systemMessage(...)`、`.toolRegistry(...)`、`.repository(...)` 和 `.maxTurns(...)`。
-- Client 不得为 null，模型名不得为 null 或空白。构建时校验，失败不得发起网络请求。
-- 系统提示词可省略；未配置工具时使用空注册表，仍可完成普通对话；未配置仓储时使用该 Agent 自己的内存仓储。
-- `maxTurns` 默认为 10，非正数在构建时被拒绝。
-- Client 由应用提供并复用；框架不得在每次对话中重新创建 Client，也不得自行关闭调用方共享的 Client。
+    subgraph PROTOCOL["Chat Completion 协议层"]
+        Request["ChatCompletionRequest"]
+        Response["ChatCompletionResponse"]
+        Codec["ChatCompletionCodec"]
+        Schema["ToolSchemaFactory"]
+        Mapper["ObjectMapper"]
+    end
 
-### FR-02：同步运行
+    subgraph CLIENT["模型客户端"]
+        Client["LumiRoseClient"]
+        Config["ClientConfig"]
+    end
 
-- 调用方使用 `run(conversationId, input)` 发起运行；会话 ID 不得为 null，输入不得为 null 或空白，非法输入在读取仓储和调用模型前被拒绝。
-- 首次调用使用空历史，后续调用使用该会话最近一次成功提交的完整历史。
-- 模型返回工具调用时继续执行 FR-05，不把该轮工具调用误当成最终答案。
-- 只有得到最终答复且消息提交成功后，方法才返回最终文本；不得用“请求超时”“服务器异常”等普通文本代替失败异常。
+    subgraph INFRA["基础设施"]
+        OkHttp["OkHttpClient"]
+        API["DeepSeek API"]
+    end
 
-### FR-03：类型化工具接口
+    Agent -->|"tools, execute"| Context
+    Agent -->|"load, appendAll"| Repository
+    Agent -->|"构造"| Request
+    Agent -->|"complete"| Client
+    Agent -->|"构造和处理"| Message
 
-**核心契约**
+    Context -->|"注册和调用"| Tool
+    Tool -->|"参数约束"| Args
+    Message -->|"assistant 包含"| ToolCall
+    MemoryRepo -.->|"实现"| Repository
 
-- 每个工具实现 `Tool<T extends ToolArgs>`，该接口是 v1 唯一的工具能力抽象，提供 `name()`、`description()`、`argsType()` 和 `execute(T args)`。
-- 参数类必须实现框架提供的 `ToolArgs` 接口。`ToolArgs` 在 v1 中为标记接口，不要求 schema 或执行方法；它用于约束工具输入类型并明确参数对象边界。
-- `argsType()` 返回 `Class<T>`，`execute(T)` 接收同一泛型 T。开发者在执行方法中直接访问类型化参数，不需要 Object 强制转换。
-- `execute(T)` 返回任意 `Object` 并允许声明 `throws Exception`。业务服务异常可以原样抛出，由框架统一转换为工具执行异常。
-- `ToolRegistry` 只依赖 `Tool<?>`；模型适配层从 `argsType()` 获得参数类型并解析 JSON，再将解析对象交给 `execute(T)`。
-- v1 不把 `ToolDefinition` 或独立 `ToolExecutor` 作为公开核心类型。工具的元数据和执行逻辑属于同一能力，不再通过额外值对象拆分。
-- 复杂工具应使用普通类实现 `Tool<T>`，通过构造器注入工作区、PowerShell 配置或业务服务依赖；工具对象不依赖 SDK 无参构造。
-- 简单工具可以使用静态工厂 `Tool.of(name, description, argsType, lambda)`。工厂返回一个隐藏实现，不引入第二套业务模型；如需声明式配置或测试替身，仍可直接实现 `Tool<T>`。
+    Request -->|"messages"| Message
+    Request -->|"tools"| Tool
+    Client -->|"读取"| Config
+    Client -->|"encodeRequest / decodeResponse"| Codec
+    Client -->|"HTTP"| OkHttp
+    Codec -->|"Tool 转 JsonNode"| Tool
+    Codec -->|"argsType 转 Schema"| Schema
+    Codec -->|"JSON"| Mapper
+    OkHttp -->|"POST /chat/completions"| API
+```
 
-**公共接口示意**
+依赖约束：
+
+- Agent 只编排模型、工具和会话，不包含 HTTP 细节。
+- ToolContext 只管理工具和执行，不依赖 DeepSeek Wire 结构。
+- Tool 不依赖 OkHttp、DeepSeek DTO 或 Agent。
+- LumiRoseClient 只处理单次同步模型调用。
+- v1 不建立公共 Wire DTO 层。
+
+## 8. 公共使用方式
+
+```java
+LumiRoseClient client = LumiRoseClient.builder()
+        .baseUrl("https://api.deepseek.com")
+        .apiKey(System.getenv("DEEPSEEK_API_KEY"))
+        .build();
+
+ToolContext tools = ToolContext.builder()
+        .register(readTool)
+        .registerAll(toolList)
+        .build();
+
+LumiRoseAgent agent = LumiRoseAgent.builder()
+        .client(client)
+        .model("deepseek-flash")
+        .systemMessage("你是一个简洁的智能体")
+        .toolContext(tools)
+        .repository(new InMemoryMessageRepository())
+        .maxTurns(10)
+        .build();
+
+String answer = agent.run(conversationId, "读取 README.md");
+```
+
+Client 和 ToolContext 应在应用生命周期内复用。
+
+## 9. 工具模型
 
 ```java
 public interface Tool<T extends ToolArgs> {
     String name();
     String description();
     Class<T> argsType();
-    Object execute(T args) throws Exception;
+    Object execute(T args);
 }
 ```
 
-**配置与校验**
+- `ToolArgs` 是标记接口。
+- `EmptyArgs` 表示无业务参数。
+- `Tool.of(name, description, argsType, handler)` 创建轻量工具。
+- 复杂工具通过类实现并注入依赖。
+- `execute` 不声明受检异常；工具内部转换为框架异常。
+- 工具名称由 Tool 显式提供，不从参数类名推导。
+- v1 不开启 DeepSeek strict 工具模式。
 
-| 契约项 | 必填 | 要求与校验 |
-|---|---|---|
-| `name()` | 是 | 模型可见的调用名称；长度 1–64，只允许字母、数字、下划线和连字符。名称独立于参数类和实现类名。 |
-| `description()` | 是 | 非空白说明，随工具定义发送给模型。 |
-| `argsType()` | 是 | 非 null 的具体参数类，参数类必须实现 `ToolArgs`，并能生成受支持的 JSON Schema、完成模型 JSON 到 Java 对象的映射。 |
-| `execute(T)` | 是 | 同步执行入口；接收已解析的类型化参数并返回供模型消费的结果。 |
+天气和时间的 demo 工具从生产代码删除。测试需要时使用 `src/test` 下的测试工具。
 
-- `Tool.of(...)` 在创建时校验名称、描述、参数类型和 lambda 均非空，并校验名称格式。
-- 直接实现 `Tool<T>` 的工具在加入 `ToolRegistry` 时接受同样的元数据与 schema 校验；非法工具不能进入已构建的注册表。
-- 参数 schema 由 `argsType()` 指向的参数类生成，不要求用户手写 JSON Schema。字段描述可使用 Jackson 描述注解；同一字段在 schema 和解析中的名称、类型和描述必须一致。
-- 无参数工具仍须提供实现 `ToolArgs` 的参数类型，并使用框架提供的 `EmptyArgs`。模型可见参数为不含业务字段的空对象。
-- 每次调用必须获得独立的参数实例，不复用上一次调用中的可变参数对象。
-- 执行结果按 JSON 序列化；字符串按 JSON 字符串编码，null 按 JSON null 编码。无法序列化的结果视为工具失败。
-- 参数 JSON 无法解析或不能映射到 `argsType()` 指定类型时，不调用 `execute(T)`，当前运行立即失败。v1 不额外承诺 Bean Validation 或完整 JSON Schema 实例校验，业务值约束由工具执行方法检查。
-
-**接入示例**
-
-复杂工具通过类实现：
+## 10. ToolContext
 
 ```java
-public final class WeatherTool implements Tool<WeatherArgs> {
-    private final WeatherService weatherService;
+ToolContext context = ToolContext.builder()
+        .register(tool)
+        .registerAll(tools)
+        .build();
+```
 
-    public WeatherTool(WeatherService weatherService) {
-        this.weatherService = weatherService;
-    }
+契约：
 
-    @Override
-    public String name() {
-        return "get_weather";
-    }
+```java
+List<Tool<?>> tools();
 
-    @Override
-    public String description() {
-        return "查询指定城市的天气";
-    }
+String execute(String toolName, String argumentsJson);
+```
 
-    @Override
-    public Class<WeatherArgs> argsType() {
-        return WeatherArgs.class;
-    }
+职责：
 
-    @Override
-    public Object execute(WeatherArgs args) throws Exception {
-        return weatherService.query(args.city);
-    }
+- 保存不可变工具快照；
+- 拒绝 null 和重复名称；
+- 按名称查找 Tool；
+- 使用 `argsType()` 解析参数；
+- 调用 `execute(T)`；
+- 将工具结果序列化为 JSON 字符串；
+- 转换查找、解析和执行异常。
+
+`tools()` 只由 Agent 调用。Client 不直接依赖 ToolContext。
+
+## 11. 消息模型
+
+```java
+public sealed interface ChatMessage permits
+        SystemMessage,
+        UserMessage,
+        AssistantMessage,
+        ToolMessage {
 }
 ```
 
-轻量工具使用同一接口的静态工厂：
-
 ```java
-Tool<WeatherArgs> weatherTool = Tool.of(
-        "get_weather",
-        "查询指定城市的天气",
-        WeatherArgs.class,
-        args -> weatherService.query(args.city)
-);
+public record SystemMessage(String content) implements ChatMessage {}
+public record UserMessage(String content) implements ChatMessage {}
+public record AssistantMessage(
+        String content,
+        String reasoningContent,
+        List<ToolCall> toolCalls
+) implements ChatMessage {}
+public record ToolMessage(
+        String toolCallId,
+        String content
+) implements ChatMessage {}
 ```
 
-### FR-04：工具注册表
+```java
+public record ToolCall(
+        String id,
+        String type,
+        Function function
+) {
+    public record Function(String name, String arguments) {}
+}
+```
 
-- `ToolRegistry.builder().add(tool)` 添加单个 `Tool<?>`；`.addAll(collection)` 添加一组工具，两者支持混合链式使用。
-- 添加 null 工具、null 集合或集合内包含 null 时，注册失败，并指出配置问题。
-- 工具名称大小写敏感；无论重复来自单个添加、同一批次还是多个批次，都必须被拒绝，不能静默覆盖已有工具。
-- `.build()` 后得到不可变注册表；修改原始工具集合或继续使用原 Builder，不得改变已构建的注册表。
-- Agent 通过 `.toolRegistry(registry)` 统一使用工具；同一 `Tool<?>` 实例可复用于不同 Agent，但该工具实现必须能安全处理不同会话的并发调用，或由调用方为共享状态提供同步。
-- 模型可见的名称和运行时查找名称必须一致，不从参数类名再次推导调用名称。
+规则：
 
-### FR-05：工具执行
+- `role` 作为 Jackson 多态判别字段；
+- 四种消息直接使用 ObjectMapper 序列化；
+- assistant 可为 content null，并保留 reasoningContent 和多个 toolCalls；
+- tool 消息只对应一个 toolCallId；
+- `arguments` 保持模型返回的 JSON 字符串；
+- 不创建公共 WireMessage 或 WireToolCall。
 
-- 使用模型返回的工具名查找注册项，并使用该项的参数类解析参数。
-- 工具名不存在、参数无法解析、`execute(T)` 抛异常、结果无法序列化时，立即终止运行；同轮尚未开始的工具不得继续执行。
-- 每个工具结果必须保留原工具调用 ID，模型下一轮可以识别结果对应哪个调用。
-- 同轮工具依次执行，只有当前轮所有工具成功完成后，才请求模型继续答复。
-- 框架不自动重试工具；模型后续轮次再次请求某个工具时属于新的调用，仍受最大轮数约束。
+多个工具调用对应多条 tool 消息：
 
-### FR-06 / FR-07：历史读取与提交
+```text
+AssistantMessage(toolCalls=[c1, c2])
+ToolMessage(toolCallId=c1, content=result1)
+ToolMessage(toolCallId=c2, content=result2)
+```
 
-- 由 `ConversationRepository` 定义读取历史和批量追加消息的接入契约，框架提供 `InMemoryConversationRepository`。
-- 读取不存在的会话返回空历史；读取结果是不可修改快照，调用方不能通过修改列表改变仓储内容。
-- 新会话按“可选系统消息、用户输入、助手及工具消息”的顺序形成历史；工具消息必须与对应助手工具调用配对。
-- 失败运行不改变此前已提交的历史；下一次运行仍从此前的成功历史开始。
-- 追加失败必须整批回滚并报告仓储错误；自定义仓储必须满足相同原子性契约。
-- 提交成功是同步返回和流式运行完成事件的前置条件。已经发出的文本增量不代表消息已经提交，也不能在失败时从订阅方撤回。
-- 取消与提交的竞争以原子提交开始前的取消检查为界：此前已观察到取消则跳过提交；已提交的成功批次不会因之后取消而撤销。
+## 12. ChatCompletionCodec
 
-### FR-08 / FR-09：运行顺序与预算
+v1 使用一个内部 Codec，不拆分多个公共 Encoder/Decoder。
 
-- 排队范围覆盖历史读取、所有模型/工具轮次以及消息提交，不能只对仓储追加操作加锁。
-- 同步调用以进入运行队列为准；流式调用在订阅时进入队列。排队中的流取消后不再启动运行。
-- 等待队列和取消不得阻塞其他会话；运行失败必须释放该会话的执行权。
-- 默认 10 次模型请求；若第 10 次得到最终答复则成功，若第 10 次仍要求工具调用则直接报告轮数上限，不再启动这些无法继续交回模型的工具。
+```java
+final class ChatCompletionCodec {
+    ObjectNode encodeRequest(ChatCompletionRequest request);
+    ChatCompletionResponse decodeResponse(String responseBody);
+    private JsonNode encodeTool(Tool<?> tool);
+    private JsonNode createToolSchema(Class<?> argsType);
+}
+```
 
-### FR-10 / FR-11：流事件与终止
+职责：
 
-- 文本通过 `TextDeltaEvent` 发送；实际开始执行工具前发送 `ToolCallStartedEvent`，成功获得并序列化结果后发送 `ToolCallCompletedEvent`。
-- 工具生命周期事件通过工具名和调用 ID 关联；完成事件包含成功状态和本次执行耗时。
-- 最终答复已生成且消息已提交后，发送一次 `RunCompletedEvent`，随后正常结束流。
-- 不要求所有文本先于所有工具事件：模型可以在工具轮次发出文本，事件按真实运行顺序发送。
-- 工具失败时允许已有开始事件，但不发送工具完成事件；流直接 `onError`。失败运行不得发送运行完成事件。
-- 取消后不再向该订阅方发送事件或 `onError`；尽力释放模型流资源。已启动的同步工具结束前，同会话后续运行仍需等待，避免取消造成同会话工具重叠执行。
+- 序列化 ChatMessage 和 ToolCall；
+- 将 Tool 转为 DeepSeek tools JsonNode；
+- 根据 `argsType()` 生成 parameters schema；
+- 组装请求；
+- 解析并校验响应；
+- 使用一个 ObjectMapper 作为 JSON 引擎。
 
-### FR-12：长会话边界
+`encodeTool` 生成完整 `{type, function}`；`createToolSchema` 只生成 parameters。v1 不引入公共 Wire DTO。
 
-- 每次运行使用完整已提交历史，不静默丢弃早期消息或自动发起摘要模型请求。
-- 服务端拒绝过长上下文时，调用方得到模型调用异常，历史不变；调用方可选择新会话或在框架之外管理历史。
+## 13. LumiRoseClient
 
-### FR-13：基础文件工具
+```java
+public final class LumiRoseClient {
+    private final ClientConfig config;
+    private final OkHttpClient httpClient;
+    private final ChatCompletionCodec codec;
 
-**公共约定**
+    public ChatCompletionResponse complete(ChatCompletionRequest request);
+}
+```
 
-- v1 提供 `ReadTool`、`WriteTool`、`EditTool` 和 `DeleteTool` 四个内置工具。每个工具实现统一的 `Tool<T extends ToolArgs>`，参数类型分别实现 `ToolArgs`，再通过 `ToolRegistry` 显式注册。
-- 四个工具共享一个必填的文件工具配置，配置提供已有的工作区根目录。所有路径参数必须是相对于工作区根目录的路径；空路径、绝对路径和解析后越界的路径均被拒绝。
-- 路径校验必须覆盖 `.`、`..` 和符号链接。已存在符号链接的目标必须位于工作区内；不存在的文件先校验其最近已存在父目录的真实路径。v1 不允许通过符号链接逃逸工作区。
-- 文件工具只处理 UTF-8 文本普通文件；目录、设备文件、二进制内容或其他编码不在 v1 保证范围内，并应以工具错误终止运行。
-- 内置工具不自动注册。调用方通过 `ToolRegistry` 显式加入所需工具。工具结果中的路径使用规范化后的工作区相对路径，不返回工作区的绝对路径。
-- 写入和编辑采用同目录临时文件加原子替换；失败时原有文件内容保持不变。写操作不提供跨进程锁，也不保证多个并发写入之间的合并，成功提交的单次文件内容必须完整。
-- 文件读取和写入均有输出或文件大小上限。超过上限的读取返回明确的截断标记；超过写入上限时拒绝写入，不截断用户内容。
+职责：
 
-**工具行为**
+- 校验请求；
+- 编码请求；
+- 通过 OkHttp 同步执行；
+- 处理超时和重试；
+- 关闭每次 Response body；
+- 解析响应；
+- 映射 HTTP/API 错误。
 
-| 工具 | 模型可见名称 | 参数与默认值 | 成功结果 | 失败条件 |
-|---|---|---|---|---|
-| `ReadTool` | `read_file` | `path`；可选 `startLine`（默认 1）、`maxLines`（默认 2000，最大 10000） | 规范化相对路径、所选文本、实际起止行、总行数和是否因行数或 1 MiB 读取上限而截断 | 路径非法、文件不存在、目标不是普通文本文件、编码失败、参数范围非法 |
-| `WriteTool` | `write_file` | `path`、`content`；可选 `overwrite`（默认 false）、`createParents`（默认 true） | 相对路径、写入字节数，以及新建或覆盖状态 | 路径越界、文件已存在但未允许覆盖、父路径不是目录、内容超过 4 MiB、IO 失败 |
-| `EditTool` | `edit_file` | `path`、`oldText`、`newText`；可选 `replaceAll`（默认 false） | 相对路径、替换次数和写入字节数 | 文件不存在、`oldText` 为空、默认模式下匹配次数不等于 1、无匹配、内容超过写入上限、IO 失败 |
-| `DeleteTool` | `delete_file` | `path` | 被删除文件的规范化相对路径 | 路径越界、文件不存在、目标是目录、符号链接或非普通文件、IO 失败 |
+Client 不负责会话、工具执行、Agent 轮次或持久化。
 
-- `EditTool` 使用精确文本匹配，不使用正则表达式。默认要求 `oldText` 恰好出现一次；`replaceAll=true` 时替换全部匹配。整个增删改查流程不能删除目录，也不提供回收站或自动备份。
-- 参数非法、工具结果序列化失败和 IO 异常沿用 FR-05：立即终止当前 Agent 运行，不自动重试。
+生命周期：
 
-### FR-14：PowerShell 工具
+- 应用级长期对象，应复用；
+- 支持多会话并发；
+- 不实现 AutoCloseable、close 或 closed；
+- OkHttp 自动淘汰空闲连接；
+- 每次 Response 仍必须通过 try-with-resources 关闭。
 
-**接入与安全边界**
+### ClientConfig
 
-- `PowerShellTool` 是高风险内置工具，不随 Agent 默认创建，也不自动加入空注册表。调用方必须配置工作区根目录和 PowerShell 可执行文件路径，并显式注册工具后才可被模型调用。
-- 推荐并验证 PowerShell 7+（`pwsh`）。可执行文件缺失、不可执行或无法启动时，工具构建或执行失败；不静默回退到可能行为不同的其他 shell。
-- 工具不接受交互输入，不加载用户 profile。执行形式应使用非交互参数（例如 `-NoLogo -NoProfile -NonInteractive -Command`），命令完成后才把完整结果返回。
-- 工作区根目录是默认工作目录，访问越界的工作目录在启动进程前被拒绝。v1 没有操作系统级安全沙箱，工作目录无法阻止 PowerShell 访问其他路径、网络或启动其他进程；显式注册该工具即表示调用方接受这一权限边界。
-- 子进程只接收配置的环境变量白名单。默认仅包含启动 PowerShell 和临时文件所需的系统变量，例如 `PATH`、`PATHEXT`、`SystemRoot`、`WINDIR`、`COMSPEC`、`TEMP`、`TMP`、`HOME`、`USERPROFILE`；调用方可显式增加变量。框架不得默认向命令暴露模型 API Key、认证令牌或其他应用秘密。
-- 默认单次执行超时为 30 秒，允许配置范围 1–300 秒。超时或运行取消时尽力终止 PowerShell 及其子进程树，并报告工具失败。
+| 配置 | 默认值 |
+|---|---:|
+| baseUrl | 必填 |
+| apiKey | 必填 |
+| connectTimeout | 10 秒 |
+| writeTimeout | 30 秒 |
+| readTimeout | 120 秒 |
+| callTimeout | 180 秒 |
+| maxRetries | 2 |
 
-**参数与结果**
+- ClientConfig 只保存 baseUrl，不保留重复的 endpoint；
+- 请求时派生 `/chat/completions`；
+- v1 不提供 fromEnv；
+- v1 不接受自定义 OkHttpClient 或 ObjectMapper；
+- OkHttp 原生连接重试关闭。
 
-| 项目 | 行为 |
+### HTTP 与重试
+
+```http
+POST {baseUrl}/chat/completions
+Authorization: Bearer {apiKey}
+Content-Type: application/json
+Accept: application/json
+```
+
+自动重试 429、500、503；不重试 400、401、402、422。优先使用 Retry-After，否则进行带抖动的指数退避。
+
+错误映射由 Client 内部完成，不为 v1 增加公共 Retry SPI 或 ErrorMapper SPI。
+
+## 14. Agent 行为
+
+1. 获取同一 conversationId 的执行权。
+2. 加载历史快照。
+3. 新会话加入 system 消息。
+4. 加入 user 消息。
+5. 获取 ToolContext 工具快照。
+6. 构造 ChatCompletionRequest。
+7. 调用 Client 并保存 assistant 消息。
+8. finishReason 为 tool_calls 时，按顺序执行工具并加入 tool 消息。
+9. 继续调用，直到得到最终文本或达到 maxTurns。
+10. 成功后一次性提交本轮消息并返回最终 content。
+
+失败规则：
+
+- 模型请求、参数解析、工具执行或仓储失败时抛出框架异常；
+- 失败运行不提交本轮消息；
+- 达到 maxTurns 视为失败；
+- 工具失败不自动反馈给模型，也不自动重试；
+- 已执行工具的外部副作用不会回滚；
+- v1 不自动裁剪或摘要历史。
+
+reasoningContent 在携带工具的请求中必须保存并回传，否则 DeepSeek 可能拒绝后续请求。
+
+## 15. 会话仓储
+
+```java
+List<ChatMessage> load(Long conversationId);
+
+void appendAll(Long conversationId, List<ChatMessage> messages);
+```
+
+- load 返回不可修改快照；
+- appendAll 必须原子；
+- InMemoryMessageRepository 线程安全；
+- 存储框架 ChatMessage，不存储 Wire JSON；
+- 成功运行仅提交一次；
+- 生产持久化由调用方实现接口。
+
+## 16. 未来持久化逻辑模型
+
+v1 不实现 MySQL，也不提供 SQL。
+
+| 字段 | 说明 |
 |---|---|
-| 输入参数 | 必填 `command` 为非空 PowerShell 命令文本；可选 `workingDirectory` 为工作区内的相对路径，默认工作区根目录 |
-| 成功调用结果 | `exitCode`、截断后的标准输出、截断后的标准错误、耗时毫秒数，以及标准输出/标准错误各自的截断标记 |
-| 失败调用结果 | 启动失败、工作目录越界、超时或取消产生框架工具异常，并通过同步异常或流式 `onError` 结束 |
-| 命令退出码 | 命令可以正常启动并结束但退出码非 0。此时工具调用仍返回结构化结果并报告非 0 退出码，让模型能够读取错误输出并决定后续动作 |
-| 输出限制 | 默认标准输出和标准错误各最多 64 KiB，允许配置上限；超限时保留前缀并标记截断，不因输出过长直接终止 Agent |
-| 生命周期 | 工具不打开持久 shell；每次调用启动新进程，进程结束、超时或被取消后不得遗留活动子进程；v1 不提供交互式长驻终端或跨调用环境变量保留 |
+| messageId | UUID，每条消息唯一 |
+| conversationId | 所属会话 |
+| sequenceNo | 会话内顺序 |
+| role | system、user、assistant、tool |
+| content | 消息正文，assistant 可为 null |
+| reasoningContent | DeepSeek 思考内容 |
+| toolCalls | assistant 的多个 ToolCall |
+| toolCallId | tool 消息对应的单个调用 ID |
+| createdAt | Instant，UTC 绝对时间 |
 
-- 子进程实际完成、退出或超时后，进程的资源必须释放。PowerShell 命令自身的副作用（文件修改、网络请求、启动进程等）不在 Agent 回滚范围内。
+不额外增加自增 id。assistant 的 toolCalls 保存列表；tool 消息的 toolCallId 是单个字符串。MessageDO 只作为未来持久化适配模型。
 
-## 8. 交互流程与关键状态
+## 17. 内置工具
 
-此 SDK 没有独立 UI。调用方通过同步返回值、流事件和异常观察运行状态。
+### 文件工具
 
-一次运行对调用方可见的状态如下：
+- ReadTool：按行窗口读取文本并报告截断；
+- WriteTool：创建或显式覆盖文件；
+- EditTool：精确文本替换，默认要求唯一匹配；
+- DeleteTool：只删除普通文件，不递归目录。
 
-| 状态 | 调用方可观察到的表现 |
-|---|---|
-| 已创建 | Agent 已通过配置校验；尚未运行模型 |
-| 运行中 | 同步调用尚未返回；流式调用持续接收文本或工具生命周期事件 |
-| 工具执行中 | 流式调用收到工具开始事件；工具参数和结果不对外暴露 |
-| 成功完成 | 同步调用收到最终文本；流式调用收到运行完成事件后正常完成 |
-| 失败 | 同步调用抛框架异常；流式调用通过 `onError` 终止；本轮消息不提交 |
-| 已取消 | Reactor 订阅取消；运行时停止后续步骤并尽力关闭模型流；提交前取消不保存本轮消息，已成功提交的数据不撤销 |
+共同规则：
 
-流式 Publisher 为冷流，每次订阅启动一次独立运行。若同一个会话被重复订阅，各次运行仍按会话队列串行处理。
+- 工作区根目录必填；
+- 拒绝绝对路径、越界路径和越界符号链接；
+- 只处理 UTF-8 普通文件；
+- 写入和编辑使用原子替换；
+- 不暴露工作区绝对路径。
 
-## 9. 业务规则、数据与权限
+### PowerShellTool
 
-- `conversationId` 由调用方提供并作为会话隔离键；v1 不自动生成会话 ID。
-- 会话消息由框架自有类型表示，至少支持 system、user、assistant 和 tool 角色。
-- 系统提示词只在仓储无历史的新会话首次运行时加入；修改 Agent 的系统提示词不会重写已有历史。
-- 工具名称在注册表内唯一；只允许调用已注册工具。
-- 工具默认自动执行；注册工具即授权 Agent 运行时执行该工具。v1 不提供每次调用确认或权限拦截流程。
-- 工具参数和结果不出现在流事件中，但工具结果会被序列化后发送给模型，并可能作为会话消息写入仓储。业务侧应避免将不应进入模型或历史记录的数据作为工具结果。
-- 消息仓储 `load` 返回快照；批量追加必须线程安全且原子。
-- 工具执行可能产生外部副作用；若后续模型请求失败，框架不回滚已执行的副作用，即使该轮消息不提交。
+- 默认不注册；
+- 必须显式配置工作区和可执行文件；
+- 非交互执行；
+- 限制超时、输出大小和环境变量；
+- 非 0 退出码作为结果返回，启动失败、超时或越界作为工具异常；
+- 工作目录不是安全沙箱；
+- 注册即授权系统命令执行能力。
 
-## 10. 非功能要求
+## 18. 非功能要求
 
 | 类别 | 要求 |
 |---|---|
-| Java 兼容 | v1 最低运行版本为 Java 17。 |
-| 模型兼容 | 通过 openai-java Chat Completions 适配 OpenAI 官方及实现所需 Chat Completions、函数工具和流式能力的兼容服务。兼容服务的具体行为仍受其协议实现影响。 |
-| SDK 版本 | 正式实现前评估届时最新稳定版 openai-java，并以完成兼容验证的最新稳定版作为 v1 依赖。当前项目使用 4.80.0；调研时 Maven metadata 显示 4.94.0。 |
-| 并发 | 内存仓储支持多会话安全并行；同一 Agent 实例内单会话运行有确定顺序。跨实例/跨进程协调由应用负责。 |
-| 故障诊断 | 使用统一框架异常类别并保留底层原因；默认错误文案不得包含 API Key、完整认证头、原始敏感参数或完整请求体。 |
-| 凭据安全 | 凭据由调用方通过 Client、环境变量或外部安全配置提供；不写入源码、测试、日志或文档。 |
-| 隐私 | 框架默认不发送使用遥测，也不在流事件中暴露工具参数和结果。 |
-| 依赖接入 | 流式 API 使用 Reactor `Flux`，因此 Reactor 是调用方使用流式能力时需要的依赖。 |
-| 网络行为 | 超时和 SDK 级重试通过调用方注入的 OpenAI Client 配置；框架不为工具执行提供自动重试。 |
-| 文件工具隔离 | 内置文件工具默认仅允许访问显式配置的工作区，路径、父目录和符号链接均经过边界校验；该边界只约束四个内置文件工具。 |
-| 命令环境 | `PowerShellTool` 的可移植性取决于调用方提供的可执行文件；v1 以 PowerShell 7+ 为主要验证目标，Windows PowerShell 5.1 不属于兼容承诺。 |
+| 平台 | Java 17+，Maven |
+| 并发 | Client 可并发；Agent 同会话串行；Tool 实现需线程安全或不含共享可变状态 |
+| 兼容 | v1 只承诺 DeepSeek Chat Completions 同步协议 |
+| 安全 | API Key 显式注入；日志和异常脱敏；文件工具限制工作区 |
+| 可测试 | MockWebServer 覆盖协议，不要求真实模型 |
+| 资源 | 复用 Client；每次 Response 必须关闭 |
+| 隐私 | 不默认发送遥测，不记录工具参数和结果 |
 
-## 11. 验收标准
+## 19. 验收标准
 
-1. 在 Java 17 的干净 Maven 工程中，可按文档创建 Agent 并对模拟模型完成无工具同步对话。
-2. 使用类型化工具参数时，注册表能提供工具元数据、解析参数、调用类实现或 `Tool.of(...)` lambda，并将结果序列化后继续模型对话。
-3. 重复工具名、未注册工具、参数解析失败和工具抛异常均产生对应框架错误；工具失败不自动回传模型。
-4. 多工具响应按模型返回顺序串行执行，且工具调用 ID 与结果对应。
-5. 成功运行把本轮消息作为一次完整批次追加；各类失败和提交前取消均不留下半轮历史。
-6. 同一个 Agent 实例的相同会话并发调用按进入顺序处理；不同会话可以并行。
-7. 成功流式调用依次暴露文本、工具开始/完成和运行完成事件；工具事件不含参数或结果；任何模型、工具或仓储失败都不发送错误事件而经 `onError` 结束。
-8. 取消流后不再发起后续模型轮次或工具调用；如果取消时已有同步工具在运行，允许该工具完成，但消息不提交；已成功提交之后的取消不撤销历史。
-9. 默认自动化测试不读取 API Key、不访问真实模型服务；真实服务验证单独作为可选集成测试。
-10. SDK 升级验证覆盖工具 schema、参数解析、同步调用、流式累积和自定义 `baseUrl`。
-11. 默认错误消息、示例、测试和文档中没有真实凭据。
-12. 四个文件工具均实现 `Tool<T extends ToolArgs>` 并通过同一 `ToolRegistry` 注册，能够读取、创建、精确编辑和删除工作区内的 UTF-8 普通文件，并返回表格定义的结构化结果。
-13. 文件工具拒绝绝对路径、`..` 越界、指向工作区外的符号链接、目录和其他非普通文件；失败的写入或编辑不破坏原文件。
-14. `PowerShellTool` 未显式配置和注册时不可调用；显式注册后能够执行非交互命令，并返回退出码、标准输出、标准错误、耗时和截断标记。
-15. PowerShell 命令超时会终止进程，输出超限会截断并标记；子进程不继承未列入白名单的应用环境变量。
+1. 无工具同步对话返回最终文本。
+2. 模型工具调用可被执行，结果以正确 toolCallId 返回。
+3. 多个 ToolCall 产生多条 ToolMessage，并按顺序执行。
+4. 工具参数解析使用 argsType，未知工具和参数错误终止运行。
+5. 成功运行原子提交消息，失败和达到 maxTurns 不提交。
+6. 同一会话并发按顺序处理，不同会话可并行。
+7. Client 正确生成请求 URL、认证头和 JSON。
+8. 429、500、503 按策略重试，400、401、402、422 不重试。
+9. 所有 Response body 在成功、失败和重试时均关闭。
+10. reasoningContent 可保存并随工具历史回传。
+11. 文件工具拒绝工作区外路径，失败写操作不破坏原文件。
+12. PowerShell 工具未显式注册时不可调用，超时和环境隔离符合配置。
+13. 默认测试不读取真实 API Key。
+14. 源码、测试和文档不含真实凭据。
 
-### 功能子需求验收补充
+## 20. 风险与依赖
 
-| 对应需求 | 验收场景与预期结果 |
-|---|---|
-| FR-01 / FR-02 | Client、模型、会话 ID 或输入无效时，在约定校验时机拒绝，不触发模型请求；未配置工具仍可普通对话。 |
-| FR-03 | 实现 `ToolArgs` 的参数类可用于 `Tool<T>`；未实现该接口的类在正常泛型使用下无法通过编译；`argsType()` 与 `execute(T)` 的参数类型不一致时无法通过编译。 |
-| FR-03 | 使用 `Tool.of(...)` 时缺少名称、描述、参数类型或 lambda、名称非法、参数 schema 不支持时立即失败；直接实现的工具在注册时以相同规则校验。 |
-| FR-03 | 自定义工具名不等于参数类名时，模型仍看到自定义名称且能正确调用；`EmptyArgs` 生成空对象 schema，`execute(T)` 获得 `EmptyArgs` 实例；类实现与 `Tool.of(...)` 工厂在注册和调用行为上一致。 |
-| FR-03 / FR-05 | 字符串、普通对象和 null 结果得到对应 JSON；参数解析失败不执行工具；序列化失败终止运行。 |
-| FR-04 | 单次添加、批量添加和交叉添加中的重名均被拒绝；null 输入被拒绝；构建后修改原集合不改变注册表。 |
-| FR-06 / FR-07 | 仓储读取空会话和快照符合约定；追加失败不留下部分消息；同步返回和运行完成事件必须晚于提交成功。 |
-| FR-08 / FR-09 | 排队中的订阅取消后不启动运行；失败释放队列；最后允许轮次的最终答复成功，最后轮次的工具请求不再执行工具并报告上限。 |
-| FR-10 / FR-11 | 工具失败仅有已发送的开始事件及 `onError`；无工具完成或运行完成事件；取消后不继续发事件。 |
-| FR-11 | 取消发生在提交前检查之前则不提交；已经成功提交后取消不撤销历史；不可中断工具结束前不启动该会话下一运行。 |
-| FR-13 | `ReadTool` 能按行窗口读取并报告总行数与截断；`WriteTool` 仅按 `overwrite` 覆盖；`EditTool` 默认单一匹配且不使用正则；`DeleteTool` 只能删除普通文件。 |
-| FR-13 | 绝对路径、工作区外路径、`..` 越界和越界符号链接均被拒绝；写、编辑或删除失败时旧文件仍存在且内容不变。 |
-| FR-13 | 文件工具参数类均实现 `ToolArgs`，模型可见名称分别为 `read_file`、`write_file`、`edit_file`、`delete_file`，并可通过 `ToolRegistry.addAll(...)` 批量注册。 |
-| FR-14 | 缺少工作区或 PowerShell 可执行文件时，`PowerShellTool` 无法构造或注册；未注册时模型不能调用；越界工作目录不会启动进程。 |
-| FR-14 | 非 0 退出码仍返回退出码和输出；超时、启动失败和取消产生工具异常；输出截断保留前缀并明确标记；默认环境不包含测试注入的秘密变量。 |
+- DeepSeek API 字段或错误语义可能变化，需保持响应兼容测试。
+- 思考模式下 reasoningContent 缺失可能导致工具历史请求失败。
+- PowerShellTool 可访问工作区外文件和网络，不是安全沙箱。
+- 自动执行工具可能产生无法回滚的外部副作用。
+- v1 不管理上下文长度，调用方需控制会话规模。
+- 内存仓储不持久，进程重启后历史丢失。
+- 当前测试源码曾包含硬编码凭据，发布前必须撤销、轮换并清理。
+- Client 必须长期复用；高频创建会增加连接池和延迟成本。
 
-## 12. 风险、依赖与假设
+## 21. 发布与 v2
 
-### 风险与依赖
+发布前：
 
-- 不同 OpenAI-compatible 服务对 Chat Completions 参数、函数工具和流式事件的实现可能存在差异；发布前需记录实际验证过的服务，不宣称所有兼容实现均完全一致。
-- SDK 的类 schema 推导可能无法直接满足自定义模型可见名称；框架需要在适配时验证并维护自定义名称与类型化参数 schema 的映射。
-- 内存仓储在进程退出后丢失数据，因此生产应用需实现持久化仓储。
-- 自动执行工具意味着已注册工具可能产生外部副作用；v1 没有确认、补偿或回滚机制。
-- 当前测试源码包含硬编码 API 凭据。发布前需撤销并轮换凭据、清理源码；如凭据进入 Git 历史，需按仓库安全流程处理历史记录。
-- Reactor 成为流式公共 API 的依赖，可能影响不使用响应式编程的调用方接入意愿。
-- `PowerShellTool` 可通过任意命令修改工作区内外文件、访问网络或启动进程。工作目录和路径校验不构成安全沙箱；默认环境白名单只能降低秘密暴露概率，不能限制命令主动读取其他位置。
-- 文件工具只能约束自身调用。调用方同时注册自定义文件工具或其他系统工具时，必须自行维持相同的工作区边界。
-- 原子替换依赖宿主文件系统能力；目标文件被其他程序锁定或文件系统不支持所需原子移动时，操作失败并保留原文件，但不保证跨进程并发更新可以合并。
-- PowerShell 7 需要由运行环境提供；测试需使用真实或受控的兼容可执行文件来验证参数、退出码和进程终止行为。
+1. 完成 P0 自动化验收；
+2. 删除生产中的 WeatherTool 和 TimeTool；
+3. 清理真实凭据；
+4. 验证 Java 17 和 Maven 构建；
+5. 确定 artifact 坐标和发布仓库。
 
-### 假设
+v2 候选：
 
-- 调用方能够创建并复用 OpenAI Java Client，并负责凭据、`baseUrl`、模型和网络策略配置。
-- Agent 未显式配置仓储时默认使用线程安全内存仓储。
-- 调用方负责控制会话长度；上下文超限时可新开会话或自行裁剪仓储历史。
-- 同一 `conversationId` 的保证范围是同一个 Agent 实例；共享会话到多个实例时由应用协调。
-- 流式调用每次订阅均启动一次新的运行，调用方应避免无意重复订阅。
-- v1 的本地文件操作面向 UTF-8 文本；二进制、其他编码和目录级操作由调用方使用自定义工具实现。
-- 调用方部署 `PowerShellTool` 的主机已安装经验证的 PowerShell 7+，并接受显式注册工具等同于授予命令执行权限。
+- OkHttp SSE 流式响应；
+- 文本与 reasoning delta；
+- 流式 tool_calls 参数合并；
+- 取消与事件模型；
+- Responses 或 Messages 协议适配。
 
-## 13. 发布计划、监控与待决事项
+v1 不保留空 stream 方法，也不引入 Reactor。
 
-### 发布步骤
+## 22. 参考
 
-1. 建立不依赖真实模型服务的自动化测试和 Maven 样例，覆盖模型循环和基础工具；
-2. 在 Java 17 上完成 P0 验收，包括文件边界、原子写入、PowerShell 超时和环境隔离；
-3. 评估并验证届时最新稳定版 openai-java；
-4. 执行可选的 OpenAI 官方及 OpenAI-compatible 服务集成验证；
-5. 完成凭据撤销/轮换及源码、文档检查后发布 v1 artifact。
-
-发布仓库、artifact 坐标与版本策略尚未确认，需在实际发布前确定。v1 不包含数据迁移工具；使用自定义仓储的应用需按其自己的数据格式管理历史兼容。
-
-### 发布后观察
-
-- 收集外部集成中的兼容性和工具执行问题；
-- 统计缺陷报告中的会话顺序、失败提交和流取消问题；
-- 若用户反馈显示 Reactor 依赖或仓储接口妨碍接入，再评估后续版本的 API 调整。
-
-框架不默认收集请求内容、工具参数、工具结果、凭据或用户身份信息。
-
-## 14. 调研参考
-
-- [openai-java v4.80.0](https://github.com/openai/openai-java/tree/v4.80.0)
-- [openai-java README](https://github.com/openai/openai-java/blob/v4.80.0/README.md)
-- [Chat Completions Function Calling 示例](https://github.com/openai/openai-java/blob/v4.80.0/openai-java-example/src/main/java/com/openai/example/FunctionCallingExample.java)
-- [Chat Completions Streaming 示例](https://github.com/openai/openai-java/blob/v4.80.0/openai-java-example/src/main/java/com/openai/example/CompletionsStreamingExample.java)
-- [当前 Agent demo](../../../src/main/java/io/github/xxxyjade/lumirose/agent/LumiRoseAgent.java)
-- [当前 ToolRegistry demo](../../../src/main/java/io/github/xxxyjade/lumirose/tool/ToolRegistry.java)
-- [当前内存消息仓储 demo](../../../src/main/java/io/github/xxxyjade/lumirose/repository/InMemoryMessageRepository.java)
+- [DeepSeek Chat Completions API](https://api-docs.deepseek.com/zh-cn/api/create-chat-completion)
+- [DeepSeek Tool Calls](https://api-docs.deepseek.com/zh-cn/guides/tool_calls)
+- [DeepSeek 思考模式](https://api-docs.deepseek.com/zh-cn/guides/thinking_mode)
+- [DeepSeek 错误码](https://api-docs.deepseek.com/zh-cn/quick_start/error_codes)
+- [openai-java](https://github.com/openai/openai-java)
+- [OkHttp](https://github.com/lysine-dev/okhttp)
