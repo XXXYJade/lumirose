@@ -72,7 +72,7 @@ public class LumiRoseAgent {
                         .toolCalls(message.toolCalls())
                         .build();
                 result = assistantMessageParam;
-                repository.append(conversationId, assistantMessageParam);
+                repository.appendAll(conversationId, List.of(assistantMessageParam));
                 messageParams.add(assistantMessageParam);
 
                 if (hasToolCall || choice.finishReason().equals("tool_calls")) {
@@ -86,7 +86,7 @@ public class LumiRoseAgent {
                                 .toolCallId(toolCall.id())
                                 .content(res)
                                 .build();
-                        repository.append(conversationId, toolMessageParam);
+                        repository.appendAll(conversationId, List.of(toolMessageParam));
                         messageParams.add(toolMessageParam);
                     }
                 }
