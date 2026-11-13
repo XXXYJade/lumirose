@@ -83,7 +83,6 @@ public class ChatCompletionMessage {
 
         public ChatCompletionMessage build() {
             Objects.requireNonNull(this.role, "role");
-            Objects.requireNonNull(this.content, "content");
             return new ChatCompletionMessage(this);
         }
     }

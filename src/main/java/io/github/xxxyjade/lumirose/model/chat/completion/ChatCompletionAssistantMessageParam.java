@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 
 import java.util.List;
-import java.util.Objects;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
@@ -72,7 +71,6 @@ public final class ChatCompletionAssistantMessageParam implements ChatCompletion
         }
 
         public ChatCompletionAssistantMessageParam build() {
-            Objects.requireNonNull(content, "content is required");
             return new ChatCompletionAssistantMessageParam(this);
         }
     }

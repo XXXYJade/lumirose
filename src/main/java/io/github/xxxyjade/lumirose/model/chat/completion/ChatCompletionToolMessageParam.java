@@ -1,6 +1,8 @@
 package io.github.xxxyjade.lumirose.model.chat.completion;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.github.xxxyjade.lumirose.exception.AgentException;
+import io.github.xxxyjade.lumirose.exception.LumiRoseErrorCode;
 
 public final class ChatCompletionToolMessageParam implements ChatCompletionMessageParam {
 
@@ -47,6 +49,9 @@ public final class ChatCompletionToolMessageParam implements ChatCompletionMessa
         }
 
         public ChatCompletionToolMessageParam build() {
+            if (toolCallId == null || toolCallId.isBlank()) {
+                throw new AgentException(LumiRoseErrorCode.PARAM_INVALID, "tool_call_id 不能为空");
+            }
             return new ChatCompletionToolMessageParam(this);
         }
     }

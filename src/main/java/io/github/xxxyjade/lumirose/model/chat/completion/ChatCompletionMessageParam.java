@@ -6,4 +6,6 @@ public sealed interface ChatCompletionMessageParam permits
         ChatCompletionUserMessageParam,
         ChatCompletionAssistantMessageParam,
         ChatCompletionToolMessageParam {
+
+    String role();
 }
