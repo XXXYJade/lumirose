@@ -1,6 +1,6 @@
 package io.github.xxxyjade.lumirose.repository;
 
-import com.openai.models.chat.completions.ChatCompletionMessageParam;
+import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionMessageParam;
 
 import java.util.ArrayList;
 import java.util.List;
