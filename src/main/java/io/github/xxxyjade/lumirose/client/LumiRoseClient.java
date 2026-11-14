@@ -1,5 +1,6 @@
 package io.github.xxxyjade.lumirose.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.xxxyjade.lumirose.exception.ClientException;
@@ -48,6 +49,10 @@ public final class LumiRoseClient {
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw httpError(response);
+            }
+
             String text = response.body() == null ? "" : response.body().string();
 
             ChatCompletionResponseParam parsed;
@@ -92,6 +97,43 @@ public final class LumiRoseClient {
                 .retryOnConnectionFailure(false)
                 .build();
         this.objectMapper = new ObjectMapper();
+    }
+
+    private ClientException httpError(Response response) {
+        int status = response.code();
+        String code = null;
+        String type = null;
+
+        try {
+            String errorBody = response.body() == null ? "" : response.body().string();
+            JsonNode error = objectMapper.readTree(errorBody).path("error");
+            code = textOrNull(error, "code");
+            type = textOrNull(error, "type");
+        } catch (IOException | RuntimeException ignored) {
+            // 错误体无法解析时，异常里只保留状态码
+        }
+
+        StringBuilder message = new StringBuilder("模型请求失败: HTTP ").append(status);
+        if (code != null || type != null) {
+            message.append(" (");
+            if (code != null) {
+                message.append("code=").append(code);
+            }
+            if (code != null && type != null) {
+                message.append(", ");
+            }
+            if (type != null) {
+                message.append("type=").append(type);
+            }
+            message.append(")");
+        }
+
+        return new ClientException(LumiRoseErrorCode.CLIENT_HTTP_ERROR, status, message.toString());
+    }
+
+    private static String textOrNull(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value == null || value.isNull() ? null : value.asText();
     }
 
     private static String requireText(String value, String field) {
