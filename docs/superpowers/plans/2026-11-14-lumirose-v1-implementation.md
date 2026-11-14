@@ -744,7 +744,7 @@ git commit -m "feat(client): map HTTP and IO failures with status and retriable 
 - Test: `agent/AgentRunTest.java`
 
 **Interfaces:**
-- Produces：`LumiRoseAgent.builder().client(...).toolContext(...).repository(...).systemMessage(String).maxTurns(int).build()`；`String run(Long, String)`。
+- Produces：`LumiRoseAgent.builder().client(...).toolContext(...).repository(...).systemMessage(String).maxTurns(int).build()`；`String run(Long, String)`；`conversationId` 为 null 时生成正数随机 id，不返回。
 - Produces：`RecordingTool(String name, String description)`，`willReturn(String)`、`willThrow(RuntimeException)`、`List<String> calls()`。
 
 - [ ] **Step 1: 写失败测试（TC-A01–A06、A09、A25）**
@@ -780,7 +780,7 @@ Expected: 编译失败或行为不符。
 
 - [ ] **Step 3: 实现**
 
-按 §4.3、R07–R08、R11 重写：参数校验（1002）；history 快照；首轮空历史加 system（默认 `You are a helpful assistant!`，`maxTurns` 默认 10）；消息列表 + 本轮缓冲；每轮 `tools` 由 `toolContext.tools()` 转 `ChatCompletionToolParam`；请求后取 `choices[0]`，用 `FinishReason.from(...)` 判定；`STOP` 分支提交并返回，非 `STOP` 暂时抛 3003（工具分支由 Task 13 补）；`load`/`appendAll` 的异常包成 `StorageException(5001)`；builder 校验三个必填（1001）。
+按 §4.3、R07–R08、R11 重写：`content` 校验（1002）、`conversationId` 为 null 时生成正数随机 id；history 快照；首轮空历史加 system（默认 `You are a helpful assistant!`，`maxTurns` 默认 10）；消息列表 + 本轮缓冲；每轮 `tools` 由 `toolContext.tools()` 转 `ChatCompletionToolParam`；请求后取 `choices[0]`，用 `FinishReason.from(...)` 判定；`STOP` 分支提交并返回，非 `STOP` 暂时抛 3003（工具分支由 Task 13 补）；`load`/`appendAll` 的异常包成 `StorageException(5001)`；builder 校验三个必填（1001）。
 
 - [ ] **Step 4: 跑测试确认通过**
 
