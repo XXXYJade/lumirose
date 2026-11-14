@@ -11,6 +11,8 @@ import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionMessagePa
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionRequestParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionResponseParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionSystemMessageParam;
+import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionToolCall;
+import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionToolMessageParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionToolParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionUserMessageParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.FinishReason;
@@ -68,32 +70,79 @@ public final class LumiRoseAgent {
                 .map(tool -> ChatCompletionToolParam.builder().function(tool).build())
                 .toList();
 
-        ChatCompletionResponseParam response = client.chatCompletion(
-                ChatCompletionRequestParam.builder()
-                        .messages(messages)
-                        .tools(tools)
-                        .build());
+        int turn = 0;
+        while (turn < maxTurns) {
+            turn++;
 
-        ChatCompletionResponseParam.Choice choice = response.choices().get(0);
-        ChatCompletionMessage message = choice.message();
-        FinishReason finishReason = FinishReason.from(choice.finishReason());
+            ChatCompletionResponseParam response = client.chatCompletion(
+                    ChatCompletionRequestParam.builder()
+                            .messages(messages)
+                            .tools(tools)
+                            .build());
 
-        if (finishReason != FinishReason.STOP
-                || message.content() == null
-                || message.content().isBlank()) {
-            throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
+            ChatCompletionResponseParam.Choice choice = response.choices().get(0);
+            ChatCompletionMessage message = choice.message();
+            FinishReason finishReason = FinishReason.from(choice.finishReason());
+
+            if (finishReason == FinishReason.LENGTH) {
+                throw new AgentException(LumiRoseErrorCode.AGENT_OUTPUT_TRUNCATED, "模型输出被截断");
+            }
+
+            if (message.toolCalls() != null && !message.toolCalls().isEmpty()) {
+                executeToolCalls(message, messages, pending);
+                continue;
+            }
+
+            if (finishReason != FinishReason.STOP) {
+                throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
+            }
+            if (message.content() == null || message.content().isBlank()) {
+                throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
+            }
+
+            ChatCompletionAssistantMessageParam assistant = assistantOf(message);
+            messages.add(assistant);
+            pending.add(assistant);
+
+            appendAll(id, pending);
+            return message.content();
         }
 
-        ChatCompletionAssistantMessageParam assistant = ChatCompletionAssistantMessageParam.builder()
+        throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
+    }
+
+    private void executeToolCalls(ChatCompletionMessage message,
+                                  List<ChatCompletionMessageParam> messages,
+                                  List<ChatCompletionMessageParam> pending) {
+        ChatCompletionAssistantMessageParam assistant = assistantOf(message);
+        messages.add(assistant);
+        pending.add(assistant);
+
+        for (ChatCompletionToolCall toolCall : message.toolCalls()) {
+            if (toolCall.function() == null
+                    || toolCall.function().name() == null
+                    || toolCall.function().name().isBlank()
+                    || toolCall.id() == null
+                    || toolCall.id().isBlank()) {
+                throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "工具调用结构非法");
+            }
+
+            String result = toolContext.execute(toolCall.function().name(), toolCall.function().arguments());
+            ChatCompletionToolMessageParam toolMessage = ChatCompletionToolMessageParam.builder()
+                    .toolCallId(toolCall.id())
+                    .content(result == null ? "" : result)
+                    .build();
+            messages.add(toolMessage);
+            pending.add(toolMessage);
+        }
+    }
+
+    private static ChatCompletionAssistantMessageParam assistantOf(ChatCompletionMessage message) {
+        return ChatCompletionAssistantMessageParam.builder()
                 .content(message.content())
                 .reasoningContent(message.reasoningContent())
                 .toolCalls(message.toolCalls())
                 .build();
-        pending.add(assistant);
-
-        appendAll(id, pending);
-
-        return message.content();
     }
 
     private List<ChatCompletionMessageParam> load(Long conversationId) {
