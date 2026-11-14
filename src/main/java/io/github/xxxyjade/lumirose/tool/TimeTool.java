@@ -3,7 +3,6 @@ package io.github.xxxyjade.lumirose.tool;
 import io.github.xxxyjade.lumirose.tool.args.EmptyParameters;
 import io.github.xxxyjade.lumirose.tool.args.ToolParameters;
 
-import java.io.IOException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,7 +31,7 @@ public class TimeTool implements Tool{
     }
 
     @Override
-    public String execute(ToolParameters parameters) throws IOException {
+    public String execute(ToolParameters parameters) {
         ZoneId zone = ZoneId.systemDefault();
         return ZonedDateTime.now()
                 .withZoneSameInstant(zone)
