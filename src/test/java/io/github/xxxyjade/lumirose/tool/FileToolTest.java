@@ -2,6 +2,7 @@ package io.github.xxxyjade.lumirose.tool;
 
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
 import io.github.xxxyjade.lumirose.exception.ToolException;
+import io.github.xxxyjade.lumirose.tool.args.EditToolParameters;
 import io.github.xxxyjade.lumirose.tool.args.ReadToolParameters;
 import io.github.xxxyjade.lumirose.tool.args.WriteToolParameters;
 import org.junit.jupiter.api.BeforeEach;
@@ -158,6 +159,43 @@ class FileToolTest {
             assertEquals(List.of("b.txt"),
                     stream.map(path -> path.getFileName().toString()).sorted().toList());
         }
+    }
+
+    @Test
+    void tc_f12_noMatchRejected() throws Exception {
+        Files.writeString(workspace.resolve("a.txt"), "foo bar");
+
+        var ex = assertThrows(ToolException.class, () -> edit("a.txt", "baz", "x"));
+
+        assertEquals(4007, ex.getErrorCode().code());
+    }
+
+    @Test
+    void tc_f13_multipleMatchesRejected() throws Exception {
+        Files.writeString(workspace.resolve("a.txt"), "foo foo");
+
+        var ex = assertThrows(ToolException.class, () -> edit("a.txt", "foo", "bar"));
+
+        assertEquals(4008, ex.getErrorCode().code());
+        assertEquals("foo foo", Files.readString(workspace.resolve("a.txt")));
+    }
+
+    @Test
+    void tc_f14_singleMatchReplaced() throws Exception {
+        Files.writeString(workspace.resolve("a.txt"), "foo bar baz");
+
+        String result = edit("a.txt", "bar", "qux");
+
+        assertEquals("Replaced 1 occurrence in a.txt.", result);
+        assertEquals("foo qux baz", Files.readString(workspace.resolve("a.txt")));
+    }
+
+    private String edit(String path, String oldString, String newString) {
+        return new EditTool(workspace).execute(EditToolParameters.builder()
+                .path(path)
+                .oldString(oldString)
+                .newString(newString)
+                .build());
     }
 
     private String write(String path, String content, boolean overwrite) {
