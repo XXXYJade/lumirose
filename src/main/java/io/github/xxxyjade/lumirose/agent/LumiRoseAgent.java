@@ -4,6 +4,7 @@ import io.github.xxxyjade.lumirose.client.LumiRoseClient;
 import io.github.xxxyjade.lumirose.exception.AgentException;
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
 import io.github.xxxyjade.lumirose.exception.LumiRoseErrorCode;
+import io.github.xxxyjade.lumirose.exception.LumiRoseException;
 import io.github.xxxyjade.lumirose.exception.StorageException;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionAssistantMessageParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionMessage;
@@ -18,6 +19,8 @@ import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionUserMessa
 import io.github.xxxyjade.lumirose.model.chat.completion.FinishReason;
 import io.github.xxxyjade.lumirose.repository.MessageRepository;
 import io.github.xxxyjade.lumirose.tool.context.ToolContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class LumiRoseAgent {
 
     private static final String DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant!";
+    private static final Logger log = LoggerFactory.getLogger(LumiRoseAgent.class);
 
     private final LumiRoseClient client;
     private final ToolContext toolContext;
@@ -70,50 +74,71 @@ public final class LumiRoseAgent {
                 .map(tool -> ChatCompletionToolParam.builder().function(tool).build())
                 .toList();
 
-        int turn = 0;
-        while (turn < maxTurns) {
-            turn++;
+        log.debug("run start: conversationId={} historySize={} toolCount={} maxTurns={}",
+                id, history.size(), tools.size(), maxTurns);
+        long runStartedAt = System.nanoTime();
 
-            ChatCompletionResponseParam response = client.chatCompletion(
-                    ChatCompletionRequestParam.builder()
-                            .messages(messages)
-                            .tools(tools)
-                            .build());
+        try {
+            int turn = 0;
+            while (turn < maxTurns) {
+                turn++;
 
-            ChatCompletionResponseParam.Choice choice = response.choices().get(0);
-            ChatCompletionMessage message = choice.message();
-            FinishReason finishReason = FinishReason.from(choice.finishReason());
+                log.debug("turn {} request: messages={} tools={}", turn, messages.size(), tools.size());
+                long requestStartedAt = System.nanoTime();
+                ChatCompletionResponseParam response = client.chatCompletion(
+                        ChatCompletionRequestParam.builder()
+                                .messages(messages)
+                                .tools(tools)
+                                .build());
+                long requestMillis = elapsedMillis(requestStartedAt);
 
-            if (finishReason == FinishReason.LENGTH) {
-                throw new AgentException(LumiRoseErrorCode.AGENT_OUTPUT_TRUNCATED, "模型输出被截断");
+                ChatCompletionResponseParam.Choice choice = response.choices().get(0);
+                ChatCompletionMessage message = choice.message();
+                FinishReason finishReason = FinishReason.from(choice.finishReason());
+                boolean hasToolCalls = message.toolCalls() != null && !message.toolCalls().isEmpty();
+                ChatCompletionResponseParam.Usage usage = response.usage();
+
+                log.debug("turn {} response: finishReason={} hasToolCalls={} elapsedMs={} promptTokens={} completionTokens={}",
+                        turn, choice.finishReason(), hasToolCalls, requestMillis,
+                        usage == null ? null : usage.promptTokens(),
+                        usage == null ? null : usage.completionTokens());
+
+                if (finishReason == FinishReason.LENGTH) {
+                    throw new AgentException(LumiRoseErrorCode.AGENT_OUTPUT_TRUNCATED, "模型输出被截断");
+                }
+
+                if (hasToolCalls) {
+                    executeToolCalls(message, messages, pending, turn);
+                    continue;
+                }
+
+                if (finishReason != FinishReason.STOP) {
+                    throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
+                }
+                if (message.content() == null || message.content().isBlank()) {
+                    throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
+                }
+
+                ChatCompletionAssistantMessageParam assistant = assistantOf(message);
+                messages.add(assistant);
+                pending.add(assistant);
+
+                appendAll(id, pending);
+                log.debug("run end: turns={} committed={} elapsedMs={}", turn, true, elapsedMillis(runStartedAt));
+                return message.content();
             }
 
-            if (message.toolCalls() != null && !message.toolCalls().isEmpty()) {
-                executeToolCalls(message, messages, pending);
-                continue;
-            }
-
-            if (finishReason != FinishReason.STOP) {
-                throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
-            }
-            if (message.content() == null || message.content().isBlank()) {
-                throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "模型响应语义非法");
-            }
-
-            ChatCompletionAssistantMessageParam assistant = assistantOf(message);
-            messages.add(assistant);
-            pending.add(assistant);
-
-            appendAll(id, pending);
-            return message.content();
+            throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
+        } catch (LumiRoseException e) {
+            log.error("run error: code={} type={}", e.getErrorCode().code(), e.getClass().getSimpleName());
+            throw e;
         }
-
-        throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
     }
 
     private void executeToolCalls(ChatCompletionMessage message,
                                   List<ChatCompletionMessageParam> messages,
-                                  List<ChatCompletionMessageParam> pending) {
+                                  List<ChatCompletionMessageParam> pending,
+                                  int turn) {
         ChatCompletionAssistantMessageParam assistant = assistantOf(message);
         messages.add(assistant);
         pending.add(assistant);
@@ -127,7 +152,17 @@ public final class LumiRoseAgent {
                 throw new AgentException(LumiRoseErrorCode.AGENT_RESPONSE_INVALID, "工具调用结构非法");
             }
 
-            String result = toolContext.execute(toolCall.function().name(), toolCall.function().arguments());
+            String name = toolCall.function().name();
+            long toolStartedAt = System.nanoTime();
+            String result;
+            try {
+                result = toolContext.execute(name, toolCall.function().arguments());
+            } catch (RuntimeException e) {
+                log.debug("turn {} tool {} failed elapsedMs={}", turn, name, elapsedMillis(toolStartedAt));
+                throw e;
+            }
+            log.debug("turn {} tool {} ok elapsedMs={}", turn, name, elapsedMillis(toolStartedAt));
+
             ChatCompletionToolMessageParam toolMessage = ChatCompletionToolMessageParam.builder()
                     .toolCallId(toolCall.id())
                     .content(result == null ? "" : result)
@@ -135,6 +170,10 @@ public final class LumiRoseAgent {
             messages.add(toolMessage);
             pending.add(toolMessage);
         }
+    }
+
+    private static long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000L;
     }
 
     private static ChatCompletionAssistantMessageParam assistantOf(ChatCompletionMessage message) {
