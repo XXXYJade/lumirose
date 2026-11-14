@@ -2,6 +2,7 @@ package io.github.xxxyjade.lumirose.tool;
 
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
 import io.github.xxxyjade.lumirose.exception.ToolException;
+import io.github.xxxyjade.lumirose.tool.args.DeleteToolParameters;
 import io.github.xxxyjade.lumirose.tool.args.EditToolParameters;
 import io.github.xxxyjade.lumirose.tool.args.ReadToolParameters;
 import io.github.xxxyjade.lumirose.tool.args.WriteToolParameters;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -188,6 +190,36 @@ class FileToolTest {
 
         assertEquals("Replaced 1 occurrence in a.txt.", result);
         assertEquals("foo qux baz", Files.readString(workspace.resolve("a.txt")));
+    }
+
+    @Test
+    void tc_f15_deletesFile() throws Exception {
+        Path file = Files.writeString(workspace.resolve("a.txt"), "x");
+
+        String result = delete("a.txt");
+
+        assertFalse(Files.exists(file));
+        assertEquals("Deleted a.txt.", result);
+    }
+
+    @Test
+    void tc_f16_directoryRejected() throws Exception {
+        Files.createDirectory(workspace.resolve("dir"));
+
+        var ex = assertThrows(ToolException.class, () -> delete("dir"));
+
+        assertEquals(4004, ex.getErrorCode().code());
+    }
+
+    @Test
+    void tc_f17_missingFileRejected() {
+        var ex = assertThrows(ToolException.class, () -> delete("missing.txt"));
+
+        assertEquals(4005, ex.getErrorCode().code());
+    }
+
+    private String delete(String path) {
+        return new DeleteTool(workspace).execute(DeleteToolParameters.builder().path(path).build());
     }
 
     private String edit(String path, String oldString, String newString) {
