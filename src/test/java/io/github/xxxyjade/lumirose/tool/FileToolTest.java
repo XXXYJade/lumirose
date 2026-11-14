@@ -3,6 +3,7 @@ package io.github.xxxyjade.lumirose.tool;
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
 import io.github.xxxyjade.lumirose.exception.ToolException;
 import io.github.xxxyjade.lumirose.tool.args.ReadToolParameters;
+import io.github.xxxyjade.lumirose.tool.args.WriteToolParameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -113,6 +114,58 @@ class FileToolTest {
             var ex = assertThrows(ToolException.class, () -> read(path));
             assertEquals(4004, ex.getErrorCode().code());
         }
+    }
+
+    @Test
+    void tc_f08_writesNewFile() throws Exception {
+        String result = write("b.txt", "hello", false);
+
+        assertEquals("hello", Files.readString(workspace.resolve("b.txt")));
+        assertEquals("Wrote 5 bytes to b.txt.", result);
+    }
+
+    @Test
+    void tc_f09_existingFileWithoutOverwriteRejected() throws Exception {
+        Files.writeString(workspace.resolve("a.txt"), "old");
+
+        var ex = assertThrows(ToolException.class, () -> write("a.txt", "new", false));
+
+        assertEquals(4006, ex.getErrorCode().code());
+        assertEquals("old", Files.readString(workspace.resolve("a.txt")));
+    }
+
+    @Test
+    void tc_f10_overwriteReplacesContent() throws Exception {
+        Files.writeString(workspace.resolve("a.txt"), "old");
+
+        write("a.txt", "new", true);
+
+        assertEquals("new", Files.readString(workspace.resolve("a.txt")));
+    }
+
+    @Test
+    void tc_f11_missingParentRejected() {
+        var ex = assertThrows(ToolException.class, () -> write("no/dir/b.txt", "x", false));
+
+        assertEquals(4004, ex.getErrorCode().code());
+    }
+
+    @Test
+    void tc_f18_noTempFileLeftBehind() throws Exception {
+        write("b.txt", "x", true);
+
+        try (var stream = Files.list(workspace)) {
+            assertEquals(List.of("b.txt"),
+                    stream.map(path -> path.getFileName().toString()).sorted().toList());
+        }
+    }
+
+    private String write(String path, String content, boolean overwrite) {
+        return new WriteTool(workspace).execute(WriteToolParameters.builder()
+                .path(path)
+                .content(content)
+                .overwrite(overwrite)
+                .build());
     }
 
     private String read(String path) {
