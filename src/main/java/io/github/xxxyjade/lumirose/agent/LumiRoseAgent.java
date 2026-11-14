@@ -219,6 +219,9 @@ public final class LumiRoseAgent {
             if (repository == null) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "repository 不能为空");
             }
+            if (maxTurns < 1) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "maxTurns 必须大于 0");
+            }
             return new LumiRoseAgent(this);
         }
     }
