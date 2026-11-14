@@ -11,6 +11,10 @@ public class ToolException extends LumiRoseException {
         this(errorCode, null, message, null);
     }
 
+    public ToolException(ErrorCode errorCode, String message, Throwable cause) {
+        this(errorCode, null, message, cause);
+    }
+
     public ToolException(ErrorCode errorCode, String toolName, String message) {
         this(errorCode, toolName, message, null);
     }
