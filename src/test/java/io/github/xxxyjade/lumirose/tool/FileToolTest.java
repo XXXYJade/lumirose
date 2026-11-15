@@ -12,8 +12,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -82,21 +86,18 @@ class FileToolTest {
 
     @Test
     void tc_f07_symlinkEscapeRejected() throws Exception {
-        Path outside = Files.createTempFile("lumirose-outside", ".txt");
+        Path outside = Files.createTempDirectory("lumirose-outside");
+        Path link = workspace.resolve("link");
         try {
-            Files.writeString(outside, "secret");
-            Path link = workspace.resolve("link.txt");
-            try {
-                Files.createSymbolicLink(link, outside);
-            } catch (IOException | UnsupportedOperationException e) {
-                assumeTrue(false, "当前环境无法创建符号链接: " + e.getMessage());
-            }
+            Files.writeString(outside.resolve("a.txt"), "secret");
+            createDirectoryLink(link, outside);
 
-            var ex = assertThrows(ToolException.class, () -> read("link.txt"));
+            var ex = assertThrows(ToolException.class, () -> read("link/a.txt"));
 
             assertEquals(4004, ex.getErrorCode().code());
         } finally {
-            Files.deleteIfExists(outside);
+            Files.deleteIfExists(link);
+            deleteRecursively(outside);
         }
     }
 
@@ -240,5 +241,39 @@ class FileToolTest {
 
     private String read(String path) {
         return tool.execute(ReadToolParameters.builder().path(path).build());
+    }
+
+    /**
+     * 优先建符号链接；Windows 非管理员会话没有权限时退回目录联接。
+     */
+    private static void createDirectoryLink(Path link, Path target) throws Exception {
+        try {
+            Files.createSymbolicLink(link, target);
+            return;
+        } catch (IOException | UnsupportedOperationException e) {
+            // 继续尝试目录联接
+        }
+
+        assumeTrue(System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"),
+                "当前环境无法创建符号链接或目录联接");
+
+        Process process = new ProcessBuilder("cmd", "/c", "mklink", "/J",
+                link.toString(), target.toString())
+                .redirectErrorStream(true)
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .start();
+        boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+        assumeTrue(finished && process.exitValue() == 0, "无法创建目录联接");
+    }
+
+    private static void deleteRecursively(Path root) throws IOException {
+        if (!Files.exists(root, LinkOption.NOFOLLOW_LINKS)) {
+            return;
+        }
+        try (var paths = Files.walk(root)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        }
     }
 }
