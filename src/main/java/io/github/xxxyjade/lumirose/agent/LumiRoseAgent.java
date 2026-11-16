@@ -39,11 +39,23 @@ public final class LumiRoseAgent {
     private final MessageRepository repository;
     private final String systemMessage;
     private final int maxTurns;
+    private final MetricsRecorder metricsRecorder;
 
     /**
-     * 运行一次对话。conversationId 为 null 时生成一个正数 id，且不返回。
+     * 运行一次对话，返回最终文本。conversationId 为 null 时生成一个正数 id，且不返回。
      */
     public String run(Long conversationId, String content) {
+        return runResult(conversationId, content).content();
+    }
+
+    /**
+     * 运行一次对话，返回包含文本、轮次与用量的结果。
+     */
+    public RunResult runResult(Long conversationId, String content) {
+        return execute(conversationId, content);
+    }
+
+    private RunResult execute(Long conversationId, String content) {
         if (content == null || content.isBlank()) {
             throw new AgentException(LumiRoseErrorCode.PARAM_INVALID, "content 不能为空");
         }
@@ -51,6 +63,7 @@ public final class LumiRoseAgent {
                 ? conversationId
                 : ThreadLocalRandom.current().nextLong(1, Long.MAX_VALUE);
 
+        long runStartedAt = System.nanoTime();
         List<ChatCompletionMessageParam> history = load(id);
         List<ChatCompletionMessageParam> pending = new ArrayList<>();
         List<ChatCompletionMessageParam> messages = new ArrayList<>();
@@ -76,7 +89,10 @@ public final class LumiRoseAgent {
 
         log.debug("run start: conversationId={} historySize={} toolCount={} maxTurns={}",
                 id, history.size(), tools.size(), maxTurns);
-        long runStartedAt = System.nanoTime();
+
+        List<ToolCallRecord> toolCallRecords = new ArrayList<>();
+        int promptTokens = 0;
+        int completionTokens = 0;
 
         try {
             int turn = 0;
@@ -85,18 +101,31 @@ public final class LumiRoseAgent {
 
                 log.debug("turn {} request: messages={} tools={}", turn, messages.size(), tools.size());
                 long requestStartedAt = System.nanoTime();
-                ChatCompletionResponseParam response = client.chatCompletion(
-                        ChatCompletionRequestParam.builder()
-                                .messages(messages)
-                                .tools(tools)
-                                .build());
+                ChatCompletionResponseParam response;
+                try {
+                    response = client.chatCompletion(
+                            ChatCompletionRequestParam.builder()
+                                    .messages(messages)
+                                    .tools(tools)
+                                    .build());
+                } catch (RuntimeException e) {
+                    recordRequest(turn, elapsedMillis(requestStartedAt), false);
+                    throw e;
+                }
                 long requestMillis = elapsedMillis(requestStartedAt);
+                recordRequest(turn, requestMillis, true);
 
                 ChatCompletionResponseParam.Choice choice = response.choices().get(0);
                 ChatCompletionMessage message = choice.message();
                 FinishReason finishReason = FinishReason.from(choice.finishReason());
                 boolean hasToolCalls = message.toolCalls() != null && !message.toolCalls().isEmpty();
                 ChatCompletionResponseParam.Usage usage = response.usage();
+
+                if (usage != null) {
+                    promptTokens += nullSafe(usage.promptTokens());
+                    completionTokens += nullSafe(usage.completionTokens());
+                    recordUsage(usage.promptTokens(), usage.completionTokens());
+                }
 
                 log.debug("turn {} response: finishReason={} hasToolCalls={} elapsedMs={} promptTokens={} completionTokens={}",
                         turn, choice.finishReason(), hasToolCalls, requestMillis,
@@ -108,7 +137,7 @@ public final class LumiRoseAgent {
                 }
 
                 if (hasToolCalls) {
-                    executeToolCalls(message, messages, pending, turn);
+                    executeToolCalls(message, messages, pending, turn, toolCallRecords);
                     continue;
                 }
 
@@ -124,8 +153,10 @@ public final class LumiRoseAgent {
                 pending.add(assistant);
 
                 appendAll(id, pending);
-                log.debug("run end: turns={} committed={} elapsedMs={}", turn, true, elapsedMillis(runStartedAt));
-                return message.content();
+                long elapsed = elapsedMillis(runStartedAt);
+                log.debug("run end: turns={} committed={} elapsedMs={}", turn, true, elapsed);
+                return new RunResult(message.content(), turn, elapsed,
+                        promptTokens, completionTokens, toolCallRecords);
             }
 
             throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
@@ -138,7 +169,8 @@ public final class LumiRoseAgent {
     private void executeToolCalls(ChatCompletionMessage message,
                                   List<ChatCompletionMessageParam> messages,
                                   List<ChatCompletionMessageParam> pending,
-                                  int turn) {
+                                  int turn,
+                                  List<ToolCallRecord> toolCallRecords) {
         ChatCompletionAssistantMessageParam assistant = assistantOf(message);
         messages.add(assistant);
         pending.add(assistant);
@@ -158,10 +190,14 @@ public final class LumiRoseAgent {
             try {
                 result = toolContext.execute(name, toolCall.function().arguments());
             } catch (RuntimeException e) {
+                recordTool(name, elapsedMillis(toolStartedAt), false);
                 log.debug("turn {} tool {} failed elapsedMs={}", turn, name, elapsedMillis(toolStartedAt));
                 throw e;
             }
-            log.debug("turn {} tool {} ok elapsedMs={}", turn, name, elapsedMillis(toolStartedAt));
+            long toolMillis = elapsedMillis(toolStartedAt);
+            recordTool(name, toolMillis, true);
+            toolCallRecords.add(new ToolCallRecord(toolCall.id(), name, toolMillis));
+            log.debug("turn {} tool {} ok elapsedMs={}", turn, name, toolMillis);
 
             ChatCompletionToolMessageParam toolMessage = ChatCompletionToolMessageParam.builder()
                     .toolCallId(toolCall.id())
@@ -170,6 +206,10 @@ public final class LumiRoseAgent {
             messages.add(toolMessage);
             pending.add(toolMessage);
         }
+    }
+
+    private static int nullSafe(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private static long elapsedMillis(long startedAt) {
@@ -182,6 +222,30 @@ public final class LumiRoseAgent {
                 .reasoningContent(message.reasoningContent())
                 .toolCalls(message.toolCalls())
                 .build();
+    }
+
+    private void recordRequest(int turn, long millis, boolean success) {
+        try {
+            metricsRecorder.onRequest(turn, millis, success);
+        } catch (RuntimeException e) {
+            log.debug("metrics failed: {}", e.getClass().getSimpleName());
+        }
+    }
+
+    private void recordUsage(Integer promptTokens, Integer completionTokens) {
+        try {
+            metricsRecorder.onUsage(nullSafe(promptTokens), nullSafe(completionTokens));
+        } catch (RuntimeException e) {
+            log.debug("metrics failed: {}", e.getClass().getSimpleName());
+        }
+    }
+
+    private void recordTool(String toolName, long millis, boolean success) {
+        try {
+            metricsRecorder.onTool(toolName, millis, success);
+        } catch (RuntimeException e) {
+            log.debug("metrics failed: {}", e.getClass().getSimpleName());
+        }
     }
 
     private List<ChatCompletionMessageParam> load(Long conversationId) {
@@ -206,6 +270,7 @@ public final class LumiRoseAgent {
         this.repository = builder.repository;
         this.systemMessage = builder.systemMessage;
         this.maxTurns = builder.maxTurns;
+        this.metricsRecorder = builder.metricsRecorder;
     }
 
     public static Builder builder() {
@@ -219,6 +284,7 @@ public final class LumiRoseAgent {
         private MessageRepository repository;
         private String systemMessage = DEFAULT_SYSTEM_MESSAGE;
         private int maxTurns = 10;
+        private MetricsRecorder metricsRecorder = MetricsRecorder.NOOP;
 
         public Builder client(LumiRoseClient client) {
             this.client = client;
@@ -248,6 +314,11 @@ public final class LumiRoseAgent {
             return this;
         }
 
+        public Builder metricsRecorder(MetricsRecorder metricsRecorder) {
+            this.metricsRecorder = metricsRecorder;
+            return this;
+        }
+
         public LumiRoseAgent build() {
             if (client == null) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "client 不能为空");
@@ -257,6 +328,9 @@ public final class LumiRoseAgent {
             }
             if (repository == null) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "repository 不能为空");
+            }
+            if (metricsRecorder == null) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "metricsRecorder 不能为空");
             }
             if (maxTurns < 1) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "maxTurns 必须大于 0");
