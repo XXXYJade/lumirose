@@ -25,28 +25,47 @@ public final class FakeServer implements AutoCloseable {
     public FakeServer() throws IOException {
         this.server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         this.server.createContext("/chat/completions", exchange -> {
-            byte[] received = exchange.getRequestBody().readAllBytes();
+            try {
+                byte[] received = exchange.getRequestBody().readAllBytes();
 
-            Map<String, String> headers = new LinkedHashMap<>();
-            exchange.getRequestHeaders().forEach((name, values) -> {
-                if (!values.isEmpty()) {
-                    headers.put(name.toLowerCase(Locale.ROOT), values.get(0));
+                Map<String, String> headers = new LinkedHashMap<>();
+                exchange.getRequestHeaders().forEach((name, values) -> {
+                    if (!values.isEmpty()) {
+                        headers.put(name.toLowerCase(Locale.ROOT), values.get(0));
+                    }
+                });
+                requests.add(new RecordedRequest(
+                        exchange.getRequestMethod(),
+                        exchange.getRequestURI().getPath(),
+                        headers,
+                        new String(received, StandardCharsets.UTF_8)));
+
+                Stub stub = responses.pollFirst();
+                int status = stub == null ? 500 : stub.status();
+                String contentType = stub == null ? "application/json" : stub.contentType();
+                byte[] body = (stub == null ? "{}" : stub.body()).getBytes(StandardCharsets.UTF_8);
+
+                exchange.getResponseHeaders().add("Content-Type", contentType);
+                if (stub != null && stub.chunked()) {
+                    exchange.sendResponseHeaders(status, 0);
+                    try (var out = exchange.getResponseBody()) {
+                        out.write(body);
+                        out.flush();
+                    }
+                } else if (stub != null && stub.declaredLength() > 0) {
+                    exchange.sendResponseHeaders(status, stub.declaredLength());
+                    try (var out = exchange.getResponseBody()) {
+                        out.write(body);
+                        out.flush();
+                    }
+                } else {
+                    exchange.sendResponseHeaders(status, body.length == 0 ? -1 : body.length);
+                    try (var out = exchange.getResponseBody()) {
+                        out.write(body);
+                    }
                 }
-            });
-            requests.add(new RecordedRequest(
-                    exchange.getRequestMethod(),
-                    exchange.getRequestURI().getPath(),
-                    headers,
-                    new String(received, StandardCharsets.UTF_8)));
-
-            Stub stub = responses.pollFirst();
-            int status = stub == null ? 500 : stub.status();
-            byte[] body = (stub == null ? "{}" : stub.body()).getBytes(StandardCharsets.UTF_8);
-
-            exchange.getResponseHeaders().add("Content-Type", "application/json");
-            exchange.sendResponseHeaders(status, body.length == 0 ? -1 : body.length);
-            try (var out = exchange.getResponseBody()) {
-                out.write(body);
+            } catch (IOException ignored) {
+                // 模拟截断时关闭连接会抛 IOException，客户端侧才是断言目标
             }
         });
         this.server.start();
@@ -57,7 +76,21 @@ public final class FakeServer implements AutoCloseable {
     }
 
     public void enqueue(int status, String body) {
-        responses.addLast(new Stub(status, body));
+        responses.addLast(new Stub(status, body, "application/json", false, 0));
+    }
+
+    public void enqueueSse(String body) {
+        responses.addLast(new Stub(200, body, "text/event-stream", true, 0));
+    }
+
+    public void enqueueTruncatedSse(String body, int declaredLength) {
+        responses.addLast(new Stub(200, body, "text/event-stream", false, declaredLength));
+    }
+
+    public int requestCount() {
+        synchronized (requests) {
+            return requests.size();
+        }
     }
 
     public List<RecordedRequest> requests() {
@@ -87,6 +120,6 @@ public final class FakeServer implements AutoCloseable {
         }
     }
 
-    private record Stub(int status, String body) {
+    private record Stub(int status, String body, String contentType, boolean chunked, int declaredLength) {
     }
 }

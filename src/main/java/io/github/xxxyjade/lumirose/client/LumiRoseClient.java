@@ -13,6 +13,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okio.BufferedSource;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -27,6 +28,7 @@ public final class LumiRoseClient {
     private final String model;
     private final Integer maxTokens;
     private final OkHttpClient httpClient;
+    private final OkHttpClient streamingHttpClient;
     private final ObjectMapper objectMapper;
 
     public ChatCompletionResponseParam chatCompletion(ChatCompletionRequestParam requestParam) {
@@ -72,6 +74,46 @@ public final class LumiRoseClient {
         }
     }
 
+    /**
+     * 以 SSE 方式请求模型，边接收边回调增量，返回装配后的完整响应。
+     */
+    public ChatCompletionResponseParam streamChatCompletion(ChatCompletionRequestParam requestParam,
+                                                            CompletionStreamListener listener) {
+        ObjectNode body = objectMapper.createObjectNode();
+        body.put("model", model);
+        body.set("messages", objectMapper.valueToTree(requestParam.messages()));
+        if (!requestParam.tools().isEmpty()) {
+            body.set("tools", objectMapper.valueToTree(requestParam.tools()));
+        }
+        if (maxTokens != null) {
+            body.put("max_tokens", maxTokens);
+        }
+        body.put("stream", true);
+
+        MediaType json = MediaType.get("application/json; charset=utf-8");
+        Request request = new Request.Builder()
+                .url(baseUrl + "/chat/completions")
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Accept", "text/event-stream")
+                .post(RequestBody.create(body.toString(), json))
+                .build();
+
+        try (Response response = streamingHttpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw httpError(response);
+            }
+            if (response.body() == null) {
+                throw new ClientException(LumiRoseErrorCode.CLIENT_RESPONSE_INVALID, "流式响应结构非法");
+            }
+            try (BufferedSource source = response.body().source()) {
+                return SseAssembler.consume(
+                        source, listener == null ? CompletionStreamListener.NOOP : listener);
+            }
+        } catch (IOException e) {
+            throw new ClientException(LumiRoseErrorCode.CLIENT_IO_ERROR, "模型请求失败", e);
+        }
+    }
+
     private LumiRoseClient(Builder builder) {
         String normalizedBaseUrl = requireText(builder.baseUrl, "baseUrl");
         if (!normalizedBaseUrl.startsWith("http://") && !normalizedBaseUrl.startsWith("https://")) {
@@ -95,6 +137,9 @@ public final class LumiRoseClient {
                 .readTimeout(Duration.ofSeconds(120))
                 .callTimeout(Duration.ofSeconds(180))
                 .retryOnConnectionFailure(false)
+                .build();
+        this.streamingHttpClient = this.httpClient.newBuilder()
+                .callTimeout(Duration.ZERO)
                 .build();
         this.objectMapper = new ObjectMapper();
     }
