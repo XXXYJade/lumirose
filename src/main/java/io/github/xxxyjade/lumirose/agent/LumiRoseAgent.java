@@ -3,6 +3,7 @@ package io.github.xxxyjade.lumirose.agent;
 import io.github.xxxyjade.lumirose.client.CompletionStreamListener;
 import io.github.xxxyjade.lumirose.client.LumiRoseClient;
 import io.github.xxxyjade.lumirose.exception.AgentException;
+import io.github.xxxyjade.lumirose.exception.ClientException;
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
 import io.github.xxxyjade.lumirose.exception.LumiRoseErrorCode;
 import io.github.xxxyjade.lumirose.exception.LumiRoseException;
@@ -41,6 +42,9 @@ public final class LumiRoseAgent {
     private final String systemMessage;
     private final int maxTurns;
     private final MetricsRecorder metricsRecorder;
+    private final int maxRetries;
+    private final long retryBaseDelayMillis;
+    private final long retryMaxDelayMillis;
 
     /**
      * 运行一次对话，返回最终文本。conversationId 为 null 时生成一个正数 id，且不返回。
@@ -117,25 +121,15 @@ public final class LumiRoseAgent {
                 checkCancelled(control);
 
                 log.debug("turn {} request: messages={} tools={}", turn, messages.size(), tools.size());
+                ChatCompletionRequestParam request = ChatCompletionRequestParam.builder()
+                        .messages(messages)
+                        .tools(tools)
+                        .build();
+                boolean[] delivered = {false};
                 long requestStartedAt = System.nanoTime();
-                ChatCompletionResponseParam response;
-                try {
-                    ChatCompletionRequestParam request = ChatCompletionRequestParam.builder()
-                            .messages(messages)
-                            .tools(tools)
-                            .build();
-                    if (streaming) {
-                        response = client.streamChatCompletion(request,
-                                new Adapter(listener, control, turn, requestStartedAt));
-                    } else {
-                        response = client.chatCompletion(request);
-                    }
-                } catch (RuntimeException e) {
-                    recordRequest(turn, elapsedMillis(requestStartedAt), false);
-                    throw e;
-                }
+                ChatCompletionResponseParam response = requestWithRetry(
+                        request, turn, listener, control, streaming, delivered);
                 long requestMillis = elapsedMillis(requestStartedAt);
-                recordRequest(turn, requestMillis, true);
 
                 ChatCompletionResponseParam.Choice choice = response.choices().get(0);
                 ChatCompletionMessage message = choice.message();
@@ -192,6 +186,61 @@ public final class LumiRoseAgent {
         } catch (LumiRoseException e) {
             log.error("run error: code={} type={}", e.getErrorCode().code(), e.getClass().getSimpleName());
             throw e;
+        }
+    }
+
+    private ChatCompletionResponseParam requestWithRetry(ChatCompletionRequestParam request,
+                                                         int turn,
+                                                         StreamListener listener,
+                                                         Control control,
+                                                         boolean streaming,
+                                                         boolean[] delivered) {
+        int attempt = 0;
+        while (true) {
+            long attemptStartedAt = System.nanoTime();
+            try {
+                ChatCompletionResponseParam response;
+                if (streaming) {
+                    response = client.streamChatCompletion(request,
+                            new Adapter(listener, control, turn, attemptStartedAt, delivered));
+                } else {
+                    response = client.chatCompletion(request);
+                }
+                recordRequest(turn, elapsedMillis(attemptStartedAt), true);
+                return response;
+            } catch (ClientException e) {
+                recordRequest(turn, elapsedMillis(attemptStartedAt), false);
+                if (!e.retriable() || attempt >= maxRetries || delivered[0]) {
+                    throw e;
+                }
+                attempt++;
+                long delay = RetryPolicy.delayMillis(attempt, retryBaseDelayMillis, retryMaxDelayMillis);
+                recordRetry(attempt, delay, e.getErrorCode().code());
+                log.debug("retry: attempt={} delayMs={} code={}",
+                        attempt, delay, e.getErrorCode().code());
+                backoff(delay, control);
+            } catch (RuntimeException e) {
+                recordRequest(turn, elapsedMillis(attemptStartedAt), false);
+                throw e;
+            }
+        }
+    }
+
+    private void backoff(long delayMillis, Control control) {
+        long deadline = System.nanoTime() + delayMillis * 1_000_000L;
+        while (true) {
+            checkCancelled(control);
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) {
+                return;
+            }
+            long slice = Math.min(50L, Math.max(1L, remaining / 1_000_000L));
+            try {
+                Thread.sleep(slice);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AgentException(LumiRoseErrorCode.AGENT_CANCELLED, "退避等待被中断");
+            }
         }
     }
 
@@ -312,6 +361,14 @@ public final class LumiRoseAgent {
         }
     }
 
+    private void recordRetry(int attempt, long delayMillis, int errorCode) {
+        try {
+            metricsRecorder.onRetry(attempt, delayMillis, String.valueOf(errorCode));
+        } catch (RuntimeException e) {
+            log.debug("metrics failed: {}", e.getClass().getSimpleName());
+        }
+    }
+
     private List<ChatCompletionMessageParam> load(Long conversationId) {
         try {
             return repository.load(conversationId);
@@ -335,6 +392,9 @@ public final class LumiRoseAgent {
         this.systemMessage = builder.systemMessage;
         this.maxTurns = builder.maxTurns;
         this.metricsRecorder = builder.metricsRecorder;
+        this.maxRetries = builder.maxRetries;
+        this.retryBaseDelayMillis = builder.retryBaseDelayMillis;
+        this.retryMaxDelayMillis = builder.retryMaxDelayMillis;
     }
 
     public static Builder builder() {
@@ -362,13 +422,16 @@ public final class LumiRoseAgent {
         private final Control control;
         private final int turn;
         private final long requestStartedAt;
+        private final boolean[] delivered;
         private boolean firstDeltaLogged;
 
-        private Adapter(StreamListener listener, Control control, int turn, long requestStartedAt) {
+        private Adapter(StreamListener listener, Control control, int turn,
+                        long requestStartedAt, boolean[] delivered) {
             this.listener = listener;
             this.control = control;
             this.turn = turn;
             this.requestStartedAt = requestStartedAt;
+            this.delivered = delivered;
         }
 
         @Override
@@ -390,6 +453,7 @@ public final class LumiRoseAgent {
         private void logFirstDelta() {
             if (!firstDeltaLogged) {
                 firstDeltaLogged = true;
+                delivered[0] = true;
                 log.debug("first delta: turn={} firstDeltaMs={}", turn, elapsedMillis(requestStartedAt));
             }
         }
@@ -403,6 +467,9 @@ public final class LumiRoseAgent {
         private String systemMessage = DEFAULT_SYSTEM_MESSAGE;
         private int maxTurns = 10;
         private MetricsRecorder metricsRecorder = MetricsRecorder.NOOP;
+        private int maxRetries = 0;
+        private long retryBaseDelayMillis = 500;
+        private long retryMaxDelayMillis = 8000;
 
         public Builder client(LumiRoseClient client) {
             this.client = client;
@@ -437,6 +504,21 @@ public final class LumiRoseAgent {
             return this;
         }
 
+        public Builder maxRetries(int maxRetries) {
+            this.maxRetries = maxRetries;
+            return this;
+        }
+
+        public Builder retryBaseDelayMillis(long retryBaseDelayMillis) {
+            this.retryBaseDelayMillis = retryBaseDelayMillis;
+            return this;
+        }
+
+        public Builder retryMaxDelayMillis(long retryMaxDelayMillis) {
+            this.retryMaxDelayMillis = retryMaxDelayMillis;
+            return this;
+        }
+
         public LumiRoseAgent build() {
             if (client == null) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "client 不能为空");
@@ -452,6 +534,16 @@ public final class LumiRoseAgent {
             }
             if (maxTurns < 1) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "maxTurns 必须大于 0");
+            }
+            if (maxRetries < 0) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "maxRetries 不能小于 0");
+            }
+            if (retryBaseDelayMillis < 0) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "retryBaseDelayMillis 不能小于 0");
+            }
+            if (retryMaxDelayMillis < retryBaseDelayMillis) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID,
+                        "retryMaxDelayMillis 不能小于 retryBaseDelayMillis");
             }
             return new LumiRoseAgent(this);
         }

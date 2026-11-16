@@ -65,4 +65,14 @@ public class StreamRecorder implements StreamListener {
     protected void cancel() {
         control.cancel();
     }
+
+    public int count(String prefix) {
+        int count = 0;
+        for (String event : events) {
+            if (event.startsWith(prefix)) {
+                count++;
+            }
+        }
+        return count;
+    }
 }
