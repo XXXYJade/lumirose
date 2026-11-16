@@ -1,5 +1,6 @@
 package io.github.xxxyjade.lumirose.agent;
 
+import io.github.xxxyjade.lumirose.client.CompletionStreamListener;
 import io.github.xxxyjade.lumirose.client.LumiRoseClient;
 import io.github.xxxyjade.lumirose.exception.AgentException;
 import io.github.xxxyjade.lumirose.exception.ConfigurationException;
@@ -52,10 +53,20 @@ public final class LumiRoseAgent {
      * 运行一次对话，返回包含文本、轮次与用量的结果。
      */
     public RunResult runResult(Long conversationId, String content) {
-        return execute(conversationId, content);
+        return execute(conversationId, content, null, false);
     }
 
-    private RunResult execute(Long conversationId, String content) {
+    /**
+     * 以流式方式运行一次对话，边接收边回调事件。
+     */
+    public RunResult runStream(Long conversationId, String content, StreamListener listener) {
+        if (listener == null) {
+            throw new AgentException(LumiRoseErrorCode.PARAM_INVALID, "listener 不能为空");
+        }
+        return execute(conversationId, content, listener, true);
+    }
+
+    private RunResult execute(Long conversationId, String content, StreamListener listener, boolean streaming) {
         if (content == null || content.isBlank()) {
             throw new AgentException(LumiRoseErrorCode.PARAM_INVALID, "content 不能为空");
         }
@@ -90,24 +101,35 @@ public final class LumiRoseAgent {
         log.debug("run start: conversationId={} historySize={} toolCount={} maxTurns={}",
                 id, history.size(), tools.size(), maxTurns);
 
+        Control control = streaming ? new Control() : null;
+        if (streaming) {
+            listener.onStart(control);
+        }
+
         List<ToolCallRecord> toolCallRecords = new ArrayList<>();
         int promptTokens = 0;
         int completionTokens = 0;
+        int turn = 0;
 
         try {
-            int turn = 0;
             while (turn < maxTurns) {
                 turn++;
+                checkCancelled(control);
 
                 log.debug("turn {} request: messages={} tools={}", turn, messages.size(), tools.size());
                 long requestStartedAt = System.nanoTime();
                 ChatCompletionResponseParam response;
                 try {
-                    response = client.chatCompletion(
-                            ChatCompletionRequestParam.builder()
-                                    .messages(messages)
-                                    .tools(tools)
-                                    .build());
+                    ChatCompletionRequestParam request = ChatCompletionRequestParam.builder()
+                            .messages(messages)
+                            .tools(tools)
+                            .build();
+                    if (streaming) {
+                        response = client.streamChatCompletion(request,
+                                new Adapter(listener, control, turn, requestStartedAt));
+                    } else {
+                        response = client.chatCompletion(request);
+                    }
                 } catch (RuntimeException e) {
                     recordRequest(turn, elapsedMillis(requestStartedAt), false);
                     throw e;
@@ -137,7 +159,8 @@ public final class LumiRoseAgent {
                 }
 
                 if (hasToolCalls) {
-                    executeToolCalls(message, messages, pending, turn, toolCallRecords);
+                    executeToolCalls(message, messages, pending, turn, toolCallRecords, listener, control, streaming);
+                    fireTurnEnd(listener, streaming, turn, finishReason, usage);
                     continue;
                 }
 
@@ -152,6 +175,9 @@ public final class LumiRoseAgent {
                 messages.add(assistant);
                 pending.add(assistant);
 
+                fireTurnEnd(listener, streaming, turn, finishReason, usage);
+                checkCancelled(control);
+
                 appendAll(id, pending);
                 long elapsed = elapsedMillis(runStartedAt);
                 log.debug("run end: turns={} committed={} elapsedMs={}", turn, true, elapsed);
@@ -160,6 +186,9 @@ public final class LumiRoseAgent {
             }
 
             throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
+        } catch (CancelledRun e) {
+            log.debug("cancel: turn={}", turn);
+            throw new AgentException(LumiRoseErrorCode.AGENT_CANCELLED, "运行已取消");
         } catch (LumiRoseException e) {
             log.error("run error: code={} type={}", e.getErrorCode().code(), e.getClass().getSimpleName());
             throw e;
@@ -170,7 +199,10 @@ public final class LumiRoseAgent {
                                   List<ChatCompletionMessageParam> messages,
                                   List<ChatCompletionMessageParam> pending,
                                   int turn,
-                                  List<ToolCallRecord> toolCallRecords) {
+                                  List<ToolCallRecord> toolCallRecords,
+                                  StreamListener listener,
+                                  Control control,
+                                  boolean streaming) {
         ChatCompletionAssistantMessageParam assistant = assistantOf(message);
         messages.add(assistant);
         pending.add(assistant);
@@ -185,17 +217,28 @@ public final class LumiRoseAgent {
             }
 
             String name = toolCall.function().name();
+            if (streaming) {
+                listener.onToolStart(toolCall.id(), name);
+            }
+
             long toolStartedAt = System.nanoTime();
             String result;
             try {
                 result = toolContext.execute(name, toolCall.function().arguments());
             } catch (RuntimeException e) {
-                recordTool(name, elapsedMillis(toolStartedAt), false);
-                log.debug("turn {} tool {} failed elapsedMs={}", turn, name, elapsedMillis(toolStartedAt));
+                long millis = elapsedMillis(toolStartedAt);
+                recordTool(name, millis, false);
+                if (streaming) {
+                    listener.onToolEnd(toolCall.id(), name, millis, false);
+                }
+                log.debug("turn {} tool {} failed elapsedMs={}", turn, name, millis);
                 throw e;
             }
             long toolMillis = elapsedMillis(toolStartedAt);
             recordTool(name, toolMillis, true);
+            if (streaming) {
+                listener.onToolEnd(toolCall.id(), name, toolMillis, true);
+            }
             toolCallRecords.add(new ToolCallRecord(toolCall.id(), name, toolMillis));
             log.debug("turn {} tool {} ok elapsedMs={}", turn, name, toolMillis);
 
@@ -205,6 +248,27 @@ public final class LumiRoseAgent {
                     .build();
             messages.add(toolMessage);
             pending.add(toolMessage);
+
+            checkCancelled(control);
+        }
+    }
+
+    private static void fireTurnEnd(StreamListener listener,
+                                    boolean streaming,
+                                    int turn,
+                                    FinishReason finishReason,
+                                    ChatCompletionResponseParam.Usage usage) {
+        if (!streaming) {
+            return;
+        }
+        listener.onTurnEnd(turn, finishReason,
+                usage == null ? 0 : nullSafe(usage.promptTokens()),
+                usage == null ? 0 : nullSafe(usage.completionTokens()));
+    }
+
+    private static void checkCancelled(Control control) {
+        if (control != null && control.isCancelled()) {
+            throw new CancelledRun();
         }
     }
 
@@ -275,6 +339,60 @@ public final class LumiRoseAgent {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    private static final class Control implements StreamControl {
+
+        private volatile boolean cancelled;
+
+        @Override
+        public void cancel() {
+            cancelled = true;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return cancelled;
+        }
+    }
+
+    private static final class Adapter implements CompletionStreamListener {
+
+        private final StreamListener listener;
+        private final Control control;
+        private final int turn;
+        private final long requestStartedAt;
+        private boolean firstDeltaLogged;
+
+        private Adapter(StreamListener listener, Control control, int turn, long requestStartedAt) {
+            this.listener = listener;
+            this.control = control;
+            this.turn = turn;
+            this.requestStartedAt = requestStartedAt;
+        }
+
+        @Override
+        public void onReasoningDelta(String delta) {
+            checkCancelled(control);
+            logFirstDelta();
+            listener.onReasoningDelta(delta);
+            checkCancelled(control);
+        }
+
+        @Override
+        public void onContentDelta(String delta) {
+            checkCancelled(control);
+            logFirstDelta();
+            listener.onContentDelta(delta);
+            checkCancelled(control);
+        }
+
+        private void logFirstDelta() {
+            if (!firstDeltaLogged) {
+                firstDeltaLogged = true;
+                log.debug("first delta: turn={} firstDeltaMs={}", turn, elapsedMillis(requestStartedAt));
+            }
+        }
     }
 
     public static final class Builder {
