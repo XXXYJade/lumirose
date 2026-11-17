@@ -19,6 +19,7 @@ public final class RecordingTool implements Tool {
 
     private volatile String result = "ok";
     private volatile RuntimeException failure;
+    private volatile Runnable beforeExecute;
 
     public RecordingTool(String name, String description) {
         this.name = name;
@@ -32,6 +33,10 @@ public final class RecordingTool implements Tool {
 
     public void willThrow(RuntimeException failure) {
         this.failure = failure;
+    }
+
+    public void beforeExecute(Runnable action) {
+        this.beforeExecute = action;
     }
 
     public List<String> calls() {
@@ -63,6 +68,9 @@ public final class RecordingTool implements Tool {
     @Override
     public String execute(ToolParameters parameters) {
         calls.add(name);
+        if (beforeExecute != null) {
+            beforeExecute.run();
+        }
         if (failure != null) {
             throw failure;
         }

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * 单 Agent 同步运行：加载历史、请求模型、执行工具、原子提交。
@@ -78,6 +79,21 @@ public final class LumiRoseAgent {
                 ? conversationId
                 : ThreadLocalRandom.current().nextLong(1, Long.MAX_VALUE);
 
+        ReentrantLock lock = ConversationLocks.forId(id);
+        try {
+            lock.lockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AgentException(LumiRoseErrorCode.AGENT_CANCELLED, "等待会话锁被中断");
+        }
+        try {
+            return runLocked(id, content, listener, streaming);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private RunResult runLocked(Long id, String content, StreamListener listener, boolean streaming) {
         long runStartedAt = System.nanoTime();
         List<ChatCompletionMessageParam> history = load(id);
         List<ChatCompletionMessageParam> pending = new ArrayList<>();
