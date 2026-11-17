@@ -46,6 +46,7 @@ public final class LumiRoseAgent {
     private final int maxRetries;
     private final long retryBaseDelayMillis;
     private final long retryMaxDelayMillis;
+    private final Integer contextBudgetChars;
 
     /**
      * 运行一次对话，返回最终文本。conversationId 为 null 时生成一个正数 id，且不返回。
@@ -136,9 +137,19 @@ public final class LumiRoseAgent {
                 turn++;
                 checkCancelled(control);
 
-                log.debug("turn {} request: messages={} tools={}", turn, messages.size(), tools.size());
+                List<ChatCompletionMessageParam> requestMessages = messages;
+                if (contextBudgetChars != null) {
+                    requestMessages = ContextTrimmer.trim(messages, contextBudgetChars);
+                    int estimated = ContextTrimmer.estimate(messages);
+                    if (estimated > contextBudgetChars) {
+                        log.debug("trim: turn={} estimatedChars={} budgetChars={} droppedMessages={}",
+                                turn, estimated, contextBudgetChars, messages.size() - requestMessages.size());
+                    }
+                }
+
+                log.debug("turn {} request: messages={} tools={}", turn, requestMessages.size(), tools.size());
                 ChatCompletionRequestParam request = ChatCompletionRequestParam.builder()
-                        .messages(messages)
+                        .messages(requestMessages)
                         .tools(tools)
                         .build();
                 boolean[] delivered = {false};
@@ -411,6 +422,7 @@ public final class LumiRoseAgent {
         this.maxRetries = builder.maxRetries;
         this.retryBaseDelayMillis = builder.retryBaseDelayMillis;
         this.retryMaxDelayMillis = builder.retryMaxDelayMillis;
+        this.contextBudgetChars = builder.contextBudgetChars;
     }
 
     public static Builder builder() {
@@ -486,6 +498,7 @@ public final class LumiRoseAgent {
         private int maxRetries = 0;
         private long retryBaseDelayMillis = 500;
         private long retryMaxDelayMillis = 8000;
+        private Integer contextBudgetChars;
 
         public Builder client(LumiRoseClient client) {
             this.client = client;
@@ -535,6 +548,11 @@ public final class LumiRoseAgent {
             return this;
         }
 
+        public Builder contextBudgetChars(Integer contextBudgetChars) {
+            this.contextBudgetChars = contextBudgetChars;
+            return this;
+        }
+
         public LumiRoseAgent build() {
             if (client == null) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "client 不能为空");
@@ -560,6 +578,9 @@ public final class LumiRoseAgent {
             if (retryMaxDelayMillis < retryBaseDelayMillis) {
                 throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID,
                         "retryMaxDelayMillis 不能小于 retryBaseDelayMillis");
+            }
+            if (contextBudgetChars != null && contextBudgetChars <= 0) {
+                throw new ConfigurationException(LumiRoseErrorCode.CONFIG_INVALID, "contextBudgetChars 必须大于 0");
             }
             return new LumiRoseAgent(this);
         }
