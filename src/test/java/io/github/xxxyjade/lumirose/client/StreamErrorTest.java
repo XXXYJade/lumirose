@@ -3,12 +3,14 @@ package io.github.xxxyjade.lumirose.client;
 import io.github.xxxyjade.lumirose.exception.ClientException;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionRequestParam;
 import io.github.xxxyjade.lumirose.model.chat.completion.ChatCompletionUserMessageParam;
+import io.github.xxxyjade.lumirose.testing.BrokenSseServer;
 import io.github.xxxyjade.lumirose.testing.FakeServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,16 +54,24 @@ class StreamErrorTest {
     }
 
     @Test
-    void tc_se02_truncatedStreamMapsTo2003() {
+    void tc_se02_truncatedStreamMapsTo2003() throws Exception {
         String body = "data: " + "{\"id\":\"c1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"a\"},"
                 + "\"finish_reason\":null}]}" + "\n\n";
-        server.enqueueTruncatedSse(body, 4096);
+        try (var broken = new BrokenSseServer(body, 4096)) {
+            var brokenClient = LumiRoseClient.builder()
+                    .baseUrl(broken.baseUrl())
+                    .apiKey("test-key")
+                    .model("deepseek-chat")
+                    .build();
 
-        var ex = assertThrows(ClientException.class, () -> call());
+            var ex = assertThrows(ClientException.class,
+                    () -> brokenClient.streamChatCompletion(request(), CompletionStreamListener.NOOP));
 
-        assertEquals(2003, ex.getErrorCode().code());
-        assertNotNull(ex.getCause());
-        assertTrue(ex.getCause() instanceof IOException);
+            assertEquals(2003, ex.getErrorCode().code());
+            assertNotNull(ex.getCause());
+            assertTrue(ex.getCause() instanceof IOException);
+            assertFalse(ex.getCause() instanceof SocketTimeoutException);
+        }
     }
 
     @Test
@@ -121,12 +131,37 @@ class StreamErrorTest {
         assertEquals(2002, ex.getErrorCode().code());
     }
 
+    @Test
+    void tc_se08_resetAfterFinishReasonStillReturnsResponse() throws Exception {
+        String body = "data: " + chunk("a") + "\n\n"
+                + "data: {\"id\":\"c1\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n";
+        try (var broken = new BrokenSseServer(body, 4096)) {
+            var brokenClient = LumiRoseClient.builder()
+                    .baseUrl(broken.baseUrl())
+                    .apiKey("test-key")
+                    .model("deepseek-chat")
+                    .build();
+
+            var response = brokenClient.streamChatCompletion(request(), CompletionStreamListener.NOOP);
+
+            assertEquals("a", response.choices().get(0).message().content());
+            assertEquals("stop", response.choices().get(0).finishReason());
+        }
+    }
+
     private void call() {
-        client.streamChatCompletion(
-                ChatCompletionRequestParam.builder()
-                        .messages(List.of(ChatCompletionUserMessageParam.builder().content("hi").build()))
-                        .build(),
-                CompletionStreamListener.NOOP);
+        client.streamChatCompletion(request(), CompletionStreamListener.NOOP);
+    }
+
+    private static ChatCompletionRequestParam request() {
+        return ChatCompletionRequestParam.builder()
+                .messages(List.of(ChatCompletionUserMessageParam.builder().content("hi").build()))
+                .build();
+    }
+
+    private static String chunk(String delta) {
+        return "{\"id\":\"c1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"" + delta
+                + "\"},\"finish_reason\":null}]}";
     }
 
     private static String sse(String... payloads) {

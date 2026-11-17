@@ -208,7 +208,7 @@ public final class LumiRoseAgent {
 
             throw new AgentException(LumiRoseErrorCode.AGENT_TURN_LIMIT, "轮次用尽");
         } catch (CancelledRun e) {
-            log.debug("cancel: turn={}", turn);
+            log.debug("cancel: turn={} reason=user_cancel", turn);
             throw new AgentException(LumiRoseErrorCode.AGENT_CANCELLED, "运行已取消");
         } catch (LumiRoseException e) {
             log.error("run error: code={} type={}", e.getErrorCode().code(), e.getClass().getSimpleName());

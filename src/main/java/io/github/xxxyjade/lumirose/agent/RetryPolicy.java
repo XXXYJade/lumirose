@@ -11,7 +11,7 @@ final class RetryPolicy {
     static long delayMillis(int retry, long base, long max) {
         long delay = base;
         for (int i = 1; i < retry; i++) {
-            if (delay >= max / 2) {
+            if (delay > max / 2) {
                 return max;
             }
             delay *= 2;

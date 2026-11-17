@@ -52,12 +52,6 @@ public final class FakeServer implements AutoCloseable {
                         out.write(body);
                         out.flush();
                     }
-                } else if (stub != null && stub.declaredLength() > 0) {
-                    exchange.sendResponseHeaders(status, stub.declaredLength());
-                    try (var out = exchange.getResponseBody()) {
-                        out.write(body);
-                        out.flush();
-                    }
                 } else {
                     exchange.sendResponseHeaders(status, body.length == 0 ? -1 : body.length);
                     try (var out = exchange.getResponseBody()) {
@@ -76,15 +70,11 @@ public final class FakeServer implements AutoCloseable {
     }
 
     public void enqueue(int status, String body) {
-        responses.addLast(new Stub(status, body, "application/json", false, 0));
+        responses.addLast(new Stub(status, body, "application/json", false));
     }
 
     public void enqueueSse(String body) {
-        responses.addLast(new Stub(200, body, "text/event-stream", true, 0));
-    }
-
-    public void enqueueTruncatedSse(String body, int declaredLength) {
-        responses.addLast(new Stub(200, body, "text/event-stream", false, declaredLength));
+        responses.addLast(new Stub(200, body, "text/event-stream", true));
     }
 
     public int requestCount() {
@@ -120,6 +110,6 @@ public final class FakeServer implements AutoCloseable {
         }
     }
 
-    private record Stub(int status, String body, String contentType, boolean chunked, int declaredLength) {
+    private record Stub(int status, String body, String contentType, boolean chunked) {
     }
 }

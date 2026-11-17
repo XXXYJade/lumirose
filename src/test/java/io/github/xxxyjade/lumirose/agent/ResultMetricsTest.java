@@ -18,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ResultMetricsTest {
 
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper =
+            new com.fasterxml.jackson.databind.ObjectMapper();
+
     private FakeServer server;
     private InMemoryMessageRepository repository;
 
@@ -67,7 +70,7 @@ class ResultMetricsTest {
     }
 
     @Test
-    void tc_rs03_runEqualsRunResult() {
+    void tc_rs03_runEqualsRunResult() throws Exception {
         var tool = new RecordingTool("t1", "一");
         tool.willReturn("one");
         server.enqueue(200, toolCalls("t1"));
@@ -79,7 +82,8 @@ class ResultMetricsTest {
         String runResult = agent(tool).runResult(2L, "hi").content();
 
         assertEquals(runResult, run);
-        assertEquals(repository.load(1L).size(), repository.load(2L).size());
+        assertEquals(mapper.writeValueAsString(repository.load(1L)),
+                mapper.writeValueAsString(repository.load(2L)));
     }
 
     @Test

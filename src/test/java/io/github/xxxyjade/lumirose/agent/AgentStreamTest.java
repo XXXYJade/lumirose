@@ -23,6 +23,8 @@ class AgentStreamTest {
 
     private FakeServer server;
     private InMemoryMessageRepository repository;
+    private final com.fasterxml.jackson.databind.ObjectMapper mapper =
+            new com.fasterxml.jackson.databind.ObjectMapper();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -129,7 +131,7 @@ class AgentStreamTest {
     }
 
     @Test
-    void tc_as08_streamMatchesRun() {
+    void tc_as08_streamMatchesRun() throws Exception {
         server.enqueue(200, stopJson("done"));
         server.enqueueSse(sse(contentChunk("done"), finalChunk("\"stop\"")));
 
@@ -137,7 +139,8 @@ class AgentStreamTest {
         String stream = agent().runStream(2L, "hi", new StreamRecorder()).content();
 
         assertEquals(run, stream);
-        assertEquals(repository.load(1L).size(), repository.load(2L).size());
+        assertEquals(mapper.writeValueAsString(repository.load(1L)),
+                mapper.writeValueAsString(repository.load(2L)));
     }
 
     @Test

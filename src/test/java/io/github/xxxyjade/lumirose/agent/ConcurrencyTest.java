@@ -10,6 +10,7 @@ import io.github.xxxyjade.lumirose.tool.context.ToolContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -19,9 +20,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Timeout(15)
 class ConcurrencyTest {
 
     private FakeServer server;
@@ -45,17 +48,22 @@ class ConcurrencyTest {
         server.enqueue(200, stopJson("done"));
         server.enqueue(200, stopJson("second"));
 
-        Thread first = new Thread(() -> agent(tool, repository).run(1L, "a"));
+        Thread first = daemon(() -> agent(tool, repository).run(1L, "a"));
         first.start();
         awaitUntil(() -> repository.count("load:1") == 1);
 
-        Thread second = new Thread(() -> agent(tool, repository).run(1L, "b"));
+        Thread second = daemon(() -> agent(tool, repository).run(1L, "b"));
         second.start();
-        gate.countDown();
-        first.join(5000);
-        second.join(5000);
-
-        assertEquals(List.of("load:1", "append:1", "load:1", "append:1"), repository.events());
+        try {
+            gate.countDown();
+            first.join(5000);
+            second.join(5000);
+            assertFalse(first.isAlive());
+            assertFalse(second.isAlive());
+            assertEquals(List.of("load:1", "append:1", "load:1", "append:1"), repository.events());
+        } finally {
+            gate.countDown();
+        }
     }
 
     @Test
@@ -85,19 +93,21 @@ class ConcurrencyTest {
         server.enqueue(200, stopJson("two"));
         server.enqueue(200, stopJson("one"));
 
-        Thread first = new Thread(() -> agent(tool, repository).run(1L, "a"));
+        Thread first = daemon(() -> agent(tool, repository).run(1L, "a"));
         first.start();
-        awaitUntil(() -> repository.count("load:1") == 1);
+        awaitUntil(() -> server.requestCount() == 1);
 
-        Thread second = new Thread(() -> agent(tool, repository).run(2L, "b"));
+        Thread second = daemon(() -> agent(tool, repository).run(2L, "b"));
         second.start();
-        second.join(5000);
-
-        assertEquals(List.of("load:1", "load:2", "append:2"), repository.events());
-        assertTrue(repository.count("append:1") == 0);
-
-        gate.countDown();
-        first.join(5000);
+        try {
+            second.join(5000);
+            assertFalse(second.isAlive());
+            assertEquals(List.of("load:1", "load:2", "append:2"), repository.events());
+            assertEquals(0, repository.count("append:1"));
+        } finally {
+            gate.countDown();
+            first.join(5000);
+        }
         assertEquals(1, repository.count("append:1"));
     }
 
@@ -109,14 +119,14 @@ class ConcurrencyTest {
         server.enqueue(200, toolCalls("slow"));
         server.enqueue(200, stopJson("done"));
 
-        Thread first = new Thread(() -> agent(tool, repository).run(1L, "a"));
+        Thread first = daemon(() -> agent(tool, repository).run(1L, "a"));
         first.start();
         awaitUntil(() -> repository.count("load:1") == 1);
 
         AtomicReference<AgentException> error = new AtomicReference<>();
         AtomicBoolean interrupted = new AtomicBoolean();
         CountDownLatch started = new CountDownLatch(1);
-        Thread second = new Thread(() -> {
+        Thread second = daemon(() -> {
             started.countDown();
             try {
                 agent(tool, repository).run(1L, "b");
@@ -126,16 +136,18 @@ class ConcurrencyTest {
             }
         });
         second.start();
-        assertTrue(started.await(5, TimeUnit.SECONDS));
-        second.interrupt();
-        second.join(5000);
+        try {
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+            second.interrupt();
+            second.join(5000);
 
-        assertNotNull(error.get());
-        assertEquals(3004, error.get().getErrorCode().code());
-        assertTrue(interrupted.get());
-
-        gate.countDown();
-        first.join(5000);
+            assertNotNull(error.get());
+            assertEquals(3004, error.get().getErrorCode().code());
+            assertTrue(interrupted.get());
+        } finally {
+            gate.countDown();
+            first.join(5000);
+        }
     }
 
     private LumiRoseAgent agent(RecordingTool tool, MessageRepository repository) {
@@ -160,6 +172,12 @@ class ConcurrencyTest {
                 .toolContext(ToolContext.builder().build())
                 .repository(repository)
                 .build();
+    }
+
+    private static Thread daemon(Runnable task) {
+        Thread thread = new Thread(task);
+        thread.setDaemon(true);
+        return thread;
     }
 
     private static RecordingTool blockingTool(CountDownLatch gate) {

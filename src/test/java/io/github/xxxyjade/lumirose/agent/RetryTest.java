@@ -4,6 +4,7 @@ import io.github.xxxyjade.lumirose.client.LumiRoseClient;
 import io.github.xxxyjade.lumirose.exception.AgentException;
 import io.github.xxxyjade.lumirose.exception.ClientException;
 import io.github.xxxyjade.lumirose.repository.InMemoryMessageRepository;
+import io.github.xxxyjade.lumirose.testing.BrokenSseServer;
 import io.github.xxxyjade.lumirose.testing.FakeServer;
 import io.github.xxxyjade.lumirose.testing.RecordingTool;
 import io.github.xxxyjade.lumirose.testing.StreamRecorder;
@@ -90,15 +91,15 @@ class RetryTest {
     }
 
     @Test
-    void tc_rt06_streamDoesNotRetryAfterDelta() {
-        server.enqueueTruncatedSse("data: " + contentChunk("a") + "\n\n", 4096);
-        server.enqueueSse(sse(contentChunk("b"), finalChunk("\"stop\"")));
+    void tc_rt06_streamDoesNotRetryAfterDelta() throws Exception {
+        try (var broken = new BrokenSseServer("data: " + contentChunk("a") + "\n\n", 4096)) {
+            var ex = assertThrows(ClientException.class,
+                    () -> agentAt(broken.baseUrl(), 2, 0).runStream(1L, "hi", new StreamRecorder()));
 
-        var ex = assertThrows(ClientException.class, () -> agent(2, 0).runStream(1L, "hi", new StreamRecorder()));
-
-        assertEquals(2003, ex.getErrorCode().code());
-        assertEquals(1, server.requestCount());
-        assertTrue(repository.load(1L).isEmpty());
+            assertEquals(2003, ex.getErrorCode().code());
+            assertEquals(1, broken.connectionCount());
+            assertTrue(repository.load(1L).isEmpty());
+        }
     }
 
     @Test
@@ -179,18 +180,27 @@ class RetryTest {
         return agent(null, recorder, maxRetries, baseDelay);
     }
 
+    private LumiRoseAgent agentAt(String baseUrl, int maxRetries, long baseDelay) {
+        return agent(baseUrl, null, null, maxRetries, baseDelay);
+    }
+
     private LumiRoseAgent agent(RecordingTool tool, int maxRetries, long baseDelay) {
         return agent(tool, null, maxRetries, baseDelay);
     }
 
     private LumiRoseAgent agent(RecordingTool tool, MetricsRecorder recorder, int maxRetries, long baseDelay) {
+        return agent(server.baseUrl(), tool, recorder, maxRetries, baseDelay);
+    }
+
+    private LumiRoseAgent agent(String baseUrl, RecordingTool tool, MetricsRecorder recorder,
+                                int maxRetries, long baseDelay) {
         ToolContext.Builder context = ToolContext.builder();
         if (tool != null) {
             context.register(tool);
         }
         LumiRoseAgent.Builder builder = LumiRoseAgent.builder()
                 .client(LumiRoseClient.builder()
-                        .baseUrl(server.baseUrl())
+                        .baseUrl(baseUrl)
                         .apiKey("test-key")
                         .model("deepseek-chat")
                         .build())

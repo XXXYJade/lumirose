@@ -33,34 +33,40 @@ final class SseAssembler {
 
         String line;
         boolean done = false;
-        while (!done && (line = source.readUtf8Line()) != null) {
-            if (line.endsWith("\r")) {
-                line = line.substring(0, line.length() - 1);
-            }
-            if (line.isEmpty()) {
-                if (data.length() > 0) {
-                    String payload = data.toString();
-                    data.setLength(0);
-                    if ("[DONE]".equals(payload)) {
-                        done = true;
-                    } else {
-                        accumulator.apply(payload);
+        try {
+            while (!done && (line = source.readUtf8Line()) != null) {
+                if (line.endsWith("\r")) {
+                    line = line.substring(0, line.length() - 1);
+                }
+                if (line.isEmpty()) {
+                    if (data.length() > 0) {
+                        String payload = data.toString();
+                        data.setLength(0);
+                        if ("[DONE]".equals(payload)) {
+                            done = true;
+                        } else {
+                            accumulator.apply(payload);
+                        }
                     }
+                    continue;
                 }
-                continue;
+                if (line.startsWith(":")) {
+                    continue;
+                }
+                if (line.startsWith("data:")) {
+                    String value = line.substring(5);
+                    if (value.startsWith(" ")) {
+                        value = value.substring(1);
+                    }
+                    if (data.length() > 0) {
+                        data.append('\n');
+                    }
+                    data.append(value);
+                }
             }
-            if (line.startsWith(":")) {
-                continue;
-            }
-            if (line.startsWith("data:")) {
-                String value = line.substring(5);
-                if (value.startsWith(" ")) {
-                    value = value.substring(1);
-                }
-                if (data.length() > 0) {
-                    data.append('\n');
-                }
-                data.append(value);
+        } catch (IOException e) {
+            if (!accumulator.finished()) {
+                throw e;
             }
         }
 
@@ -101,6 +107,10 @@ final class SseAssembler {
 
         private Accumulator(CompletionStreamListener listener) {
             this.listener = listener;
+        }
+
+        private boolean finished() {
+            return finishReason != null;
         }
 
         private void apply(String payload) {
