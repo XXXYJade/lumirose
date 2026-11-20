@@ -1168,7 +1168,7 @@ mvn<span class="w"> </span>-o<span class="w"> </span><span class="nb">test</span
 <span class="n">LumiRoseResult</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="mi">1L</span><span class="p">,</span><span class="w"> </span><span class="s">"读取 a.txt 并总结"</span><span class="p">);</span>
 <span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="na">content</span><span class="p">());</span>
 </code></pre></div>
-<p><code>run</code> 在内部消费完 SSE 才返回；<code>deltas()</code> 为空，<code>content()</code> 和 usage 立即可用。</p>
+<p><code>run</code> 在内部消费完 SSE 才返回；<code>deltas()</code> 为空，<code>content()</code> 和 usage 立即可用。<code>content()</code> 是所有 assistant 正文的拼接，工具轮前言也计入。</p>
 <h2 id="_6">流式运行<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">agent</span><span class="p">.</span><span class="na">streamRun</span><span class="p">(</span><span class="mi">1L</span><span class="p">,</span><span class="w"> </span><span class="s">"读取 a.txt 并总结"</span><span class="p">);</span>
 

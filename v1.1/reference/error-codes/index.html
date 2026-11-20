@@ -1135,7 +1135,7 @@
 <td>3005</td>
 <td><code>AGENT_COMPRESSION_FAILED</code></td>
 <td><code>AgentException</code></td>
-<td>压缩请求失败、摘要为空、摘要被截断、重试耗尽</td>
+<td>压缩请求失败、摘要为空、摘要被截断、压缩后缺 usage、重试耗尽</td>
 <td>否</td>
 </tr>
 <tr>
@@ -1252,7 +1252,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>400 上下文超限不单独设码。</strong> 它仍然是 <code>CLIENT_HTTP_ERROR</code>，消息里带厂商返回的 <code>error.message</code>，以便调用方看到“context length exceeded”一类具体原因。新增专用码需要框架判断超限语义，而不同厂商文案不一致。</p>
+<p><strong>400 上下文超限不单独设码。</strong> 它仍然是 <code>CLIENT_HTTP_ERROR</code>，但厂商 <code>error.message</code> 可能回显提示词或对话内容，因此不进入异常；调用方通过 HTTP 400 识别。新增专用码需要框架判断超限语义，而不同厂商文案不一致。</p>
 <h2 id="_4">异常消息<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <p>消息只描述“哪一步失败”，不复述数据：</p>
 <table>
@@ -1276,8 +1276,8 @@
 </tr>
 <tr>
 <td>2001</td>
-<td>HTTP 状态、<code>error.code</code>、<code>error.type</code>、<code>error.message</code>（截断 500 字符）</td>
-<td>响应体原文、请求头、API Key</td>
+<td>HTTP 状态、<code>error.code</code>、<code>error.type</code></td>
+<td>厂商 <code>error.message</code>、响应体原文、请求头、API Key</td>
 </tr>
 <tr>
 <td>2002</td>
@@ -1306,7 +1306,7 @@
 </tr>
 <tr>
 <td>3005</td>
-<td>压缩阶段（请求、空摘要、截断）</td>
+<td>压缩阶段（请求、空摘要、截断、缺 usage）</td>
 <td>对话内容、摘要原文</td>
 </tr>
 <tr>
@@ -1397,7 +1397,7 @@
 </tr>
 <tr>
 <td>3005</td>
-<td>检查压缩模型可用性与窗口/阈值配置；旧历史未变</td>
+<td>检查压缩模型可用性、窗口/阈值与 usage；旧历史未变</td>
 </tr>
 <tr>
 <td>4001–4008</td>
@@ -1417,7 +1417,7 @@
 <ul>
 <li><code>apiKey</code> 不得出现在异常消息、cause、日志或 <code>toString()</code> 中。</li>
 <li>异常消息不包含消息内容、工具参数/结果、请求/响应体原文。</li>
-<li>2001 只提取厂商 <code>error</code> 对象的四个字段，且 <code>error.message</code> 截断到 500 字符。</li>
+<li>2001 只提取 HTTP 状态与厂商 <code>error</code> 的 <code>code</code>/<code>type</code>，不包含厂商 <code>error.message</code>。</li>
 <li>错误码是公开契约；新增或改码需要同步更新本页与 <a href="../../requirements/v1.1/">v1.1 需求</a>。</li>
 </ul>
 

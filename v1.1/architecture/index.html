@@ -1209,7 +1209,7 @@ tool               → common.exception
   -&gt; repository.load(id)                   // active + contextTokens
   -&gt; 压缩判断（只在开始时一次）
   -&gt; client.chatCompletion(request, sink)  // 始终 SSE
-  -&gt; 工具循环（tool_calls -&gt; 执行 -&gt; 再请求）
+  -&gt; 工具循环（tool_calls -&gt; 执行 -&gt; assistant/tool 加入 pending -&gt; 重建 request -&gt; 再请求）
   -&gt; repository.append 或 compact
   -&gt; LumiRoseResult
 </code></pre></div>
@@ -1235,6 +1235,7 @@ tool               → common.exception
 <h2 id="_9">持久化<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h2>
 <ul>
 <li>SPI 只有 <code>load</code> / <code>append</code> / <code>compact</code>；</li>
+<li><code>append</code> / <code>compact</code> 在会话行不存在时创建；</li>
 <li>无进程内锁、无 version；</li>
 <li>逻辑截断，不物理删除；</li>
 <li>内存实现 + 未来 JDBC。</li>

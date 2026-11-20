@@ -1132,7 +1132,8 @@
 <p><code>deltas()</code> 是 <code>Iterable&lt;String&gt;</code>：</p>
 <ul>
 <li>只包含正文增量；</li>
-<li>按到达顺序；</li>
+<li>按到达顺序，拼接等于最终 <code>content()</code>；</li>
+<li>包含工具调用轮的前言；工具结果本身不进入增量；</li>
 <li>只能消费一次；</li>
 <li>消费完迭代结束，结果变为已完成。</li>
 </ul>

@@ -1338,12 +1338,13 @@
 </tbody>
 </table>
 <p>摘要 <code>max_tokens</code> 不在 builder 上；压缩时按 <code>min(2048, max(1, floor(window × (1 - threshold) × 0.7)))</code> 推导。</p>
-<div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
 
-<span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
+<span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
 </code></pre></div>
 <ul>
-<li><code>conversationId</code> 为 null 时生成正数 id，但不返回；<code>content</code> 为 null/空白 → <code>PARAM_INVALID(1002)</code>。</li>
+<li><code>conversationId</code> 由调用方提供，必须非空；框架不生成 id。</li>
+<li><code>content</code> 为 null/空白 → <code>PARAM_INVALID(1002)</code>。</li>
 <li><code>run</code> 返回已完成结果；<code>streamRun</code> 返回 pending 结果。</li>
 <li>Agent 无可变状态，同一实例可跨线程复用。</li>
 </ul>
@@ -1367,17 +1368,17 @@
 <tbody>
 <tr>
 <td><code>content()</code></td>
-<td>最终正文</td>
+<td>所有 assistant 正文的拼接（含工具轮前言）</td>
 <td>抛 <code>IllegalStateException</code></td>
 </tr>
 <tr>
 <td><code>promptTokens()</code></td>
-<td>输入 token 数</td>
+<td>最后一次成功响应的输入 token 数</td>
 <td>抛 <code>IllegalStateException</code></td>
 </tr>
 <tr>
 <td><code>completionTokens()</code></td>
-<td>输出 token 数</td>
+<td>最后一次成功响应的输出 token 数</td>
 <td>抛 <code>IllegalStateException</code></td>
 </tr>
 <tr>
@@ -1393,7 +1394,8 @@
 </tbody>
 </table>
 <ul>
-<li><code>deltas()</code> 只产出正文增量，不产出 reasoning、工具或轮次事件。</li>
+<li><code>deltas()</code> 只产出正文增量，不产出 reasoning、工具或轮次事件；其拼接等于 <code>content()</code>。</li>
+<li><code>content()</code> 是结果级拼接，不是单条历史消息；工具轮的 assistant 消息仍分别保存。</li>
 <li>运行失败时，<code>deltas()</code> 迭代抛出 <code>LumiRoseException</code>。</li>
 <li>不实现 <code>AutoCloseable</code>，没有 <code>close()</code>。</li>
 </ul>
@@ -1492,9 +1494,9 @@
 <span class="p">}</span>
 </code></pre></div>
 <ul>
-<li><code>load</code> 不返回 null；不存在时返回 <code>Conversation.empty(id)</code>。</li>
-<li><code>append</code> 只插入 pending，不改变已有 active。</li>
-<li><code>compact</code> 原子地停用全部 active、插入 summary 与 pending、更新 <code>contextTokens</code>。</li>
+<li><code>load</code> 不返回 null；不存在时返回 <code>Conversation.empty(id)</code>，不创建会话行。</li>
+<li><code>append</code> 只插入 pending，不改变已有 active；会话行不存在时先创建；pending 为空时直接返回。</li>
+<li><code>compact</code> 原子地停用全部 active、插入 summary 与 pending、更新 <code>contextTokens</code>；会话行不存在时先创建。</li>
 <li>实现必须线程安全。</li>
 <li>本版提供 <code>InMemoryConversationRepository</code>；JDBC 实现不在本版。</li>
 </ul>

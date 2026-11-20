@@ -1677,8 +1677,16 @@
 <td>第一轮 <code>tool_calls</code>，执行工具；第二轮 stop；最终 content 正确</td>
 </tr>
 <tr>
+<td><code>a02_requestRebuilt</code></td>
+<td>第二轮请求包含第一轮的 assistant(tool_calls) 与 tool 结果；不会重复发送第一轮请求</td>
+</tr>
+<tr>
+<td><code>a02_toolPreambleInContent</code></td>
+<td>第一轮正文“我先读一下”进入 deltas 和最终 content；两者一致</td>
+</tr>
+<tr>
 <td><code>a02_historyOrder</code></td>
-<td>pending 为 assistant(tool_calls)、tool、assistant；<code>tool_call_id</code> 对应</td>
+<td>pending 为 user、assistant(tool_calls)、tool、assistant；<code>tool_call_id</code> 对应</td>
 </tr>
 <tr>
 <td><code>a02_multipleToolsInOrder</code></td>
@@ -1818,7 +1826,7 @@
 </tr>
 <tr>
 <td><code>a06_deltasOnlyContent</code></td>
-<td>reasoning 与工具事件不出现在增量中</td>
+<td>reasoning 与工具事件不出现；工具轮正文可出现于增量</td>
 </tr>
 </tbody>
 </table>
@@ -2026,6 +2034,10 @@
 <td>压缩 <code>finish_reason=length</code> → 3005</td>
 </tr>
 <tr>
+<td><code>a13_missingUsageAfterCompression</code></td>
+<td>压缩后最终响应无 usage → 3005；不写</td>
+</tr>
+<tr>
 <td><code>a13_oldHistoryIntact</code></td>
 <td>失败后 <code>load</code> 结果与运行前一致</td>
 </tr>
@@ -2085,6 +2097,18 @@
 <tr>
 <td><code>a15_appendKeepsActive</code></td>
 <td><code>append</code> 后旧 active 不变，只多出 pending</td>
+</tr>
+<tr>
+<td><code>a15_firstAppendCreatesConversation</code></td>
+<td>空仓储首次 <code>append</code> 创建 conversations 行；<code>load</code> 能读到消息与 contextTokens</td>
+</tr>
+<tr>
+<td><code>a15_firstCompactCreatesConversation</code></td>
+<td>空仓储首次 <code>compact</code> 创建 conversations 行并写入 summary</td>
+</tr>
+<tr>
+<td><code>a15_emptyAppendNoop</code></td>
+<td><code>append</code> 空列表不创建行、不报错</td>
 </tr>
 <tr>
 <td><code>a15_compactDeactivates</code></td>
@@ -2155,6 +2179,10 @@
 <td><code>LumiRoseAgent.Builder</code> 没有 <code>compressionSummaryMaxTokens</code>；摘要上限由 A11 验证</td>
 </tr>
 <tr>
+<td><code>a17_runSignature</code></td>
+<td><code>run</code>/<code>streamRun</code> 第一参数是 <code>long</code>，不存在可空 id 入口</td>
+</tr>
+<tr>
 <td><code>a17_register</code></td>
 <td>重名 / null / <code>registerAll(null)</code> → 1001；<code>tools()</code> 顺序等于注册顺序且不可变</td>
 </tr>
@@ -2220,11 +2248,11 @@
 </tr>
 <tr>
 <td><code>a18_contextOverflow</code></td>
-<td>400 + 厂商 <code>error.message</code> → 2001，消息含该 message 且截断 500 字符</td>
+<td>400 + 厂商 <code>error.message</code> → 2001；消息含状态/code/type，不含厂商 message 或内容</td>
 </tr>
 <tr>
 <td><code>a18_messageSecurity</code></td>
-<td>异常消息不含 Key、消息内容、工具参数/结果、响应体原文</td>
+<td>异常消息不含 Key、消息内容、工具参数/结果、响应体原文、厂商 message</td>
 </tr>
 <tr>
 <td><code>a18_codeMapping</code></td>

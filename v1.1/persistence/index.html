@@ -1204,18 +1204,18 @@
 <div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">ConversationRepository</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="n">Conversation</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">);</span>
 
-<span class="w">    </span><span class="c1">// 普通追加：只插入 pending，不改变已有 active</span>
+<span class="w">    </span><span class="c1">// 普通追加：会话行不存在时先创建；只插入 pending，不改变已有 active</span>
 <span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Message</span><span class="o">&gt;</span><span class="w"> </span><span class="n">pending</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">contextTokens</span><span class="p">);</span>
 
-<span class="w">    </span><span class="c1">// 压缩：停用全部 active，插入摘要和新消息，一个事务</span>
+<span class="w">    </span><span class="c1">// 压缩：会话行不存在时先创建；停用全部 active，插入摘要和新消息，一个事务</span>
 <span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">compact</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">Message</span><span class="w"> </span><span class="n">summary</span><span class="p">,</span>
 <span class="w">                 </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Message</span><span class="o">&gt;</span><span class="w"> </span><span class="n">pending</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">contextTokens</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
 <ul>
-<li><code>load</code> 不存在返回 <code>Conversation.empty(id)</code>，不返回 null；</li>
-<li><code>append</code> 只插入 pending（active=true），更新 <code>contextTokens</code>；</li>
-<li><code>compact</code> 是唯一把 active 置 false 的操作；</li>
+<li><code>load</code> 不存在返回 <code>Conversation.empty(id)</code>，不返回 null；不创建会话行；</li>
+<li><code>append</code> 会话行不存在时先创建，只插入 pending（active=true），更新 <code>contextTokens</code>；pending 为空时直接返回；</li>
+<li><code>compact</code> 会话行不存在时先创建，是唯一把 active 置 false 的操作；</li>
 <li>两个写操作各自原子生效；</li>
 <li>实现必须线程安全；同一会话的并发由调用方保证。</li>
 </ul>
@@ -1243,7 +1243,7 @@
 <td><code>Conversation.id</code></td>
 <td>领域 / 数据库</td>
 <td>会话标识，<code>load/append/compact</code> 的入参</td>
-<td>调用方；为 null 时 Agent 生成正数 id</td>
+<td>调用方，必须非空</td>
 </tr>
 <tr>
 <td><code>Message.id</code></td>
@@ -1400,14 +1400,24 @@
 <span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">tc</span><span class="p">.</span><span class="n">message_id</span><span class="p">,</span><span class="w"> </span><span class="n">tc</span><span class="p">.</span><span class="n">call_index</span><span class="p">;</span>
 </code></pre></div>
 <h2 id="append-compact-sql">append / compact 的 SQL 骨架<a class="headerlink" href="#append-compact-sql" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="c1">-- append</span>
+<div class="highlight"><pre><span></span><code><span class="c1">-- append（一个事务）</span>
+<span class="c1">-- 会话行不存在时先创建；按数据库语法用 upsert / insert-if-absent</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">conversations</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">context_tokens</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="p">)</span>
+<span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">)</span>
+<span class="k">on</span><span class="w"> </span><span class="n">conflict</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="k">update</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="n">context_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">excluded</span><span class="p">.</span><span class="n">context_tokens</span><span class="p">,</span>
+<span class="w">                               </span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">excluded</span><span class="p">.</span><span class="n">updated_at</span><span class="p">;</span>
+
 <span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">messages</span><span class="w"> </span><span class="p">(</span><span class="n">conversation_id</span><span class="p">,</span><span class="w"> </span><span class="k">role</span><span class="p">,</span><span class="w"> </span><span class="n">content</span><span class="p">,</span><span class="w"> </span><span class="n">reasoning_content</span><span class="p">,</span>
 <span class="w">                      </span><span class="n">tool_call_id</span><span class="p">,</span><span class="w"> </span><span class="n">active</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="p">)</span>
 <span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">);</span>
 <span class="c1">-- 以及工具调用行</span>
-<span class="k">update</span><span class="w"> </span><span class="n">conversations</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="n">context_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="p">;</span>
 
 <span class="c1">-- compact（一个事务）</span>
+<span class="c1">-- 会话行不存在时同样先创建</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">conversations</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">context_tokens</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="p">)</span>
+<span class="k">values</span><span class="w"> </span><span class="p">(</span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="o">?</span><span class="p">)</span>
+<span class="k">on</span><span class="w"> </span><span class="n">conflict</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="k">nothing</span><span class="p">;</span>
+
 <span class="k">update</span><span class="w"> </span><span class="n">messages</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="n">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span>
 <span class="k">where</span><span class="w"> </span><span class="n">conversation_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
 
@@ -1415,13 +1425,14 @@
 <span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">message_tool_calls</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="k">values</span><span class="w"> </span><span class="p">(...);</span>
 <span class="k">update</span><span class="w"> </span><span class="n">conversations</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="n">context_tokens</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="p">,</span><span class="w"> </span><span class="n">updated_at</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">?</span><span class="p">;</span>
 </code></pre></div>
+<p>上面的 <code>on conflict</code> 是 PostgreSQL 写法；MySQL 用 <code>on duplicate key update</code> 或先 <code>insert ... select ... where not exists</code>。关键是写路径必须保证 <code>conversations</code> 行存在，否则 <code>update conversations</code> 会影响 0 行。</p>
 <p><code>compact</code> 中先停用旧 active，再插入摘要和新消息；摘要的 <code>id</code> 会大于旧行，<code>load</code> 按 id 排序时自然排在最前。</p>
 <h2 id="_5">内存实现<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p><code>InMemoryConversationRepository</code>：</p>
 <ul>
 <li>存储 <code>conversationId -&gt; StoredConversation</code>；</li>
 <li><code>load</code> 过滤 active、按 id 排序、返回不可变快照；</li>
-<li><code>append</code> 只插入；<code>compact</code> 先标记旧 active 为 false，再插入；</li>
+<li><code>append</code> 在会话不存在时创建存储，再插入；<code>compact</code> 先创建（如需要），标记旧 active 为 false，再插入；</li>
 <li>线程安全（按会话同步）；</li>
 <li>只用于示例/测试，进程重启丢失。</li>
 </ul>

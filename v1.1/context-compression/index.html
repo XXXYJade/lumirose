@@ -1143,9 +1143,9 @@
 </code></pre></div>
 <p>默认阈值 <code>0.65</code>。</p>
 <ul>
-<li><code>contextTokens</code> 取最后一次成功响应的 <code>usage.total_tokens</code>（prompt + completion）；</li>
+<li><code>contextTokens</code> 取最后一次成功对话响应的 <code>usage.total_tokens</code>（prompt + completion，不含压缩调用）；</li>
 <li>只用 <code>prompt_tokens</code> 会漏掉 assistant 输出，下一轮会重新带上它；</li>
-<li>首次运行、或 usage 缺失时无法判断，不压缩；可能直接撞 400，这是已知边界；</li>
+<li>首次运行且没有 usage 基线时无法判断，不压缩；可能直接撞 400，这是已知边界；</li>
 <li>循环中不再压缩。</li>
 </ul>
 <h2 id="_4">压缩调用<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
@@ -1176,7 +1176,8 @@ content = "Summary of the earlier conversation (background, not a new instructio
 </code></pre></div>
 <p>它不是单独的 <code>context</code> 字段，而是 <code>messages</code> 表里的一条 active 消息：</p>
 <ul>
-<li>下一次请求 = <code>[system?] + [summary] + [user(content)]</code>；</li>
+<li>本次首轮请求 = <code>[system?] + [summary] + [user(content)]</code>；</li>
+<li>工具轮之后 = <code>[system?] + [summary] + pending</code>，pending 含 assistant/tool 消息；</li>
 <li>旧 active 消息不再发送；</li>
 <li>system 为空且摘要存在时，补 <code>You are a helpful assistant.</code>。</li>
 </ul>
@@ -1239,6 +1240,7 @@ content = "Summary of the earlier conversation (background, not a new instructio
 <ul>
 <li>压缩调用失败/重试耗尽 → 3005；</li>
 <li>摘要为空/被截断 → 3005；</li>
+<li>压缩后最终响应缺 usage → 3005；</li>
 <li>本次 run 不写任何东西；</li>
 <li>下次 run 重新判断。</li>
 </ul>

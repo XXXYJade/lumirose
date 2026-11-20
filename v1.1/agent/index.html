@@ -1091,28 +1091,30 @@
 
 <h1 id="agent">Agent 与结果<a class="headerlink" href="#agent" title="Permanent link">&para;</a></h1>
 <h2 id="_1">入口<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
-<span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
+<span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
 </code></pre></div>
 <p>两者共用同一套执行逻辑：加载会话、判断压缩、SSE 请求、工具循环、原子提交。区别只有增量消费者和返回时机。</p>
 <ul>
 <li><code>run</code>：同步返回已完成结果；SSE 在内部消费完；<code>deltas()</code> 为空。</li>
 <li><code>streamRun</code>：返回未完成结果；第一次迭代 <code>deltas()</code> 时启动虚拟线程；消费完才填充 <code>content()</code> 和 usage。</li>
 </ul>
-<p><code>conversationId</code> 为 null 时框架生成一个正数 id，但不返回；<code>content</code> 为 null 或空白 → <code>PARAM_INVALID(1002)</code>。</p>
+<p><code>conversationId</code> 由调用方提供，必须非空；<code>content</code> 为 null 或空白 → <code>PARAM_INVALID(1002)</code>。</p>
 <h2 id="_2">一次运行的步骤<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>1. load(id) -&gt; active messages + contextTokens
-2. contextTokens &gt; window * 0.65 ? 压缩 : 不压缩
-3. 组装 [system?] + active + [user(content)]
+2. contextTokens &gt; window * contextCompressionThreshold ? 压缩 : 不压缩
+3. base = 压缩后的 [summary] 或 active；pending = [user(content)]
 4. 循环：
+   - request = [system?] + base + pending
    - SSE 请求
-   - usage -&gt; contextTokens
-   - tool_calls -&gt; 顺序执行工具，追加 assistant + tool
-   - stop -&gt; 追加 assistant，结束
-5. 成功：append 或 compact
+   - usage -&gt; contextTokens（压缩后最后一次响应缺 usage → 3005）
+   - tool_calls -&gt; 顺序执行工具，assistant + tool 加入 pending，下一轮重建 request
+   - stop -&gt; assistant 加入 pending，结束
+5. 成功：append 或 compact（pending 含本次 user）
 6. 返回 LumiRoseResult
 </code></pre></div>
 <p>失败、取消、轮次用尽、压缩失败都不执行第 5 步。</p>
+<p><code>content()</code> 是所有 assistant 正文的拼接，包含工具调用轮的前言；<code>deltas()</code> 的拼接与它相等。</p>
 <h2 id="lumiroseresult">LumiRoseResult 的状态<a class="headerlink" href="#lumiroseresult" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1158,7 +1160,8 @@
 </code></pre></div>
 <p><code>deltas()</code> 是唯一消费入口：</p>
 <ul>
-<li>只产出正文增量，按到达顺序；</li>
+<li>只产出正文增量，按到达顺序；拼接等于 <code>content()</code>；</li>
+<li>包含工具调用轮的前言，因此 <code>content()</code> 可能不只是一轮 assistant 文本；</li>
 <li>只允许消费一次；</li>
 <li>reasoning、工具事件、轮次事件只进日志，不进入 <code>deltas()</code>；</li>
 <li>消费过慢会占队列内存；提前退出用 <code>cancel()</code>。</li>
