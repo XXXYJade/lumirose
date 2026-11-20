@@ -1263,7 +1263,6 @@
 <span class="w">        </span><span class="p">.</span><span class="na">retryMaxDelayMillis</span><span class="p">(</span><span class="mi">8000</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextWindowTokens</span><span class="p">(</span><span class="mi">128_000</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextCompressionThreshold</span><span class="p">(</span><span class="mf">0.65</span><span class="p">)</span>
-<span class="w">        </span><span class="p">.</span><span class="na">compressionSummaryMaxTokens</span><span class="p">(</span><span class="mi">2048</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </code></pre></div>
 <table>
@@ -1336,14 +1335,9 @@
 <td>0.65</td>
 <td><code>(0, 1)</code></td>
 </tr>
-<tr>
-<td><code>compressionSummaryMaxTokens(int)</code></td>
-<td>否</td>
-<td>2048</td>
-<td>&gt; 0，且小于 <code>window × (1 - threshold)</code></td>
-</tr>
 </tbody>
 </table>
+<p>摘要 <code>max_tokens</code> 不在 builder 上；压缩时按 <code>min(2048, max(1, floor(window × (1 - threshold) × 0.7)))</code> 推导。</p>
 <div class="highlight"><pre><span></span><code><span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
 
 <span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
@@ -1683,6 +1677,7 @@
 <li>公共 <code>StreamListener</code>、<code>StreamControl</code>、<code>runStream(...)</code></li>
 <li><code>MessageRepository</code>、<code>InMemoryMessageRepository</code>、<code>appendAll(...)</code></li>
 <li><code>ContextTrimmer</code>、<code>contextBudgetChars(...)</code></li>
+<li><code>compressionSummaryMaxTokens(...)</code>（摘要上限改为内部推导）</li>
 <li><code>ConversationLocks</code>、<code>RetryPolicy</code>（重试在 Agent 内部）</li>
 </ul>
 

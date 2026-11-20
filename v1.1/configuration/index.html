@@ -454,7 +454,7 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        两个压缩参数不是一回事
+        压缩阈值与摘要上限
       
     </span>
   </a>
@@ -992,7 +992,7 @@
   <a href="#_2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        两个压缩参数不是一回事
+        压缩阈值与摘要上限
       
     </span>
   </a>
@@ -1175,20 +1175,13 @@
 <td>0.65</td>
 <td><code>(0, 1)</code></td>
 </tr>
-<tr>
-<td><code>compressionSummaryMaxTokens</code></td>
-<td>否</td>
-<td>2048</td>
-<td>大于 0，且小于 <code>window × (1 - threshold)</code></td>
-</tr>
 </tbody>
 </table>
-<h3 id="_2">两个压缩参数不是一回事<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
+<h3 id="_2">压缩阈值与摘要上限<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><code>contextCompressionThreshold</code>：<strong>什么时候压</strong>。<code>contextTokens &gt; window × threshold</code> 时触发。</li>
-<li><code>compressionSummaryMaxTokens</code>：<strong>摘要最多多长</strong>，即压缩调用的 <code>max_tokens</code>。</li>
+<li>摘要上限不是公开配置：压缩时按 <code>min(2048, max(1, floor(window × (1 - threshold) × 0.7)))</code> 推导 <code>max_tokens</code>，用于限制摘要长度并给新消息留出空间。</li>
 </ul>
-<p>没有输出上限，摘要可能接近模型默认输出上限，压缩后仍然占满窗口；所以两者都要有。</p>
 <h2 id="_3">示例<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="n">LumiRoseAgent</span><span class="w"> </span><span class="n">agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LumiRoseAgent</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
 <span class="w">        </span><span class="p">.</span><span class="na">client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
@@ -1201,7 +1194,6 @@
 <span class="w">        </span><span class="p">.</span><span class="na">retryMaxDelayMillis</span><span class="p">(</span><span class="mi">8000</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextWindowTokens</span><span class="p">(</span><span class="mi">128_000</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextCompressionThreshold</span><span class="p">(</span><span class="mf">0.65</span><span class="p">)</span>
-<span class="w">        </span><span class="p">.</span><span class="na">compressionSummaryMaxTokens</span><span class="p">(</span><span class="mi">2048</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </code></pre></div>
 <h2 id="_4">并发<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
@@ -1222,7 +1214,6 @@
 <li><code>retryMaxDelayMillis &lt; retryBaseDelayMillis</code></li>
 <li><code>contextWindowTokens &lt;= 0</code></li>
 <li><code>contextCompressionThreshold</code> 不在 <code>(0, 1)</code></li>
-<li><code>compressionSummaryMaxTokens &lt;= 0</code> 或不满足窗口约束</li>
 </ul>
 <p>运行时参数错误（如 <code>content</code> 为空）抛 <code>PARAM_INVALID(1002)</code>。</p>
 

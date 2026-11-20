@@ -1159,7 +1159,6 @@ mvn<span class="w"> </span>-o<span class="w"> </span><span class="nb">test</span
 <span class="w">        </span><span class="p">.</span><span class="na">maxRetries</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextWindowTokens</span><span class="p">(</span><span class="mi">128_000</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">contextCompressionThreshold</span><span class="p">(</span><span class="mf">0.65</span><span class="p">)</span>
-<span class="w">        </span><span class="p">.</span><span class="na">compressionSummaryMaxTokens</span><span class="p">(</span><span class="mi">2048</span><span class="p">)</span>
 <span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
 </code></pre></div>
 <p><code>contextWindowTokens</code> 为 null 时关闭上下文压缩。其余配置见 <a href="../configuration/">配置</a>。</p>

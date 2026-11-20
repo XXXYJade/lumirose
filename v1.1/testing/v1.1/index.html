@@ -1584,6 +1584,10 @@
 <td>HTTP 映射、错误码、消息安全</td>
 </tr>
 <tr>
+<td><code>ApiSurfaceTest</code></td>
+<td>公共 API 反射检查：不存在已移除的方法</td>
+</tr>
+<tr>
 <td><code>LoggingTest</code></td>
 <td>日志内容与敏感信息</td>
 </tr>
@@ -1954,6 +1958,10 @@
 <td><code>contextTokens &gt; window × threshold</code> 时发压缩请求</td>
 </tr>
 <tr>
+<td><code>a11_summaryMaxDerived</code></td>
+<td><code>window=4000</code>、<code>threshold=0.65</code> 时压缩请求的 <code>max_tokens=980</code>；大窗口封顶 2048</td>
+</tr>
+<tr>
 <td><code>a11_summarySaved</code></td>
 <td><code>compact</code> 一次；summary 为 assistant 且带 header；旧消息 active=false</td>
 </tr>
@@ -2129,7 +2137,7 @@
 </tbody>
 </table>
 <h3 id="a17-schema">A17 工具、Schema、文件<a class="headerlink" href="#a17-schema" title="Permanent link">&para;</a></h3>
-<p><code>ToolTest</code>、<code>SchemaTest</code>、<code>FileToolTest</code></p>
+<p><code>ToolTest</code>、<code>SchemaTest</code>、<code>FileToolTest</code>、<code>ApiSurfaceTest</code></p>
 <table>
 <thead>
 <tr>
@@ -2141,6 +2149,10 @@
 <tr>
 <td><code>a17_toolOfValidation</code></td>
 <td>四参数任一 null → 1001；<code>parametersClass()</code> 正确</td>
+</tr>
+<tr>
+<td><code>a17_summaryCapNotPublic</code></td>
+<td><code>LumiRoseAgent.Builder</code> 没有 <code>compressionSummaryMaxTokens</code>；摘要上限由 A11 验证</td>
 </tr>
 <tr>
 <td><code>a17_register</code></td>
