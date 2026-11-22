@@ -269,9 +269,21 @@ body {
   box-shadow: none;
 }
 
+@media screen and (min-width: 76.25em) {
+  /* The header already carries the wordmark on desktop; the tiny duplicate
+     label only adds visual noise. */
+  .md-nav--primary .md-nav__title[for="__drawer"] {
+    display: none;
+  }
+}
+
 @media screen and (max-width: 76.1875em) {
   .md-nav--primary .md-nav__title[for="__drawer"] {
     padding-left: 1.22rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
   }
 }
 
