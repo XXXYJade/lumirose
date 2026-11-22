@@ -1,0 +1,1050 @@
+/* ==========================================================================
+   LumiRose docs theme
+
+   Direction: a florist's workbench in spring — white paper, pale petals,
+   ink text. Chrome stays quiet; the code page is the pressed-flower moment.
+   ========================================================================== */
+
+:root {
+  --lr-accent: #e0447c;
+  --lr-accent-hover: #a5154a;
+  --lr-sky: #2e7ea8;
+}
+
+/* --------------------------------------------------------------------------
+   Light scheme
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #d02f66;
+  --md-primary-fg-color--light: #e0447c;
+  --md-primary-fg-color--dark: #a5154a;
+  --md-primary-bg-color: #ffffff;
+
+  --md-accent-fg-color: #d02f66;
+  --md-accent-fg-color--transparent: rgb(224 68 124 / 12%);
+
+  --md-default-fg-color: #241d26;
+  --md-default-fg-color--light: #5f5567;
+  --md-default-fg-color--lighter: #7c7082;
+  --md-default-fg-color--lightest: #efeaf1;
+  --md-default-bg-color: #fdfbfd;
+
+  --md-typeset-color: #3b3340;
+  --md-typeset-a-color: #d02f66;
+
+  --md-code-bg-color: #f7f2fd;
+  --md-code-fg-color: #2b2231;
+
+  --md-footer-bg-color: #fbf8fb;
+  --md-footer-fg-color: #5f5567;
+  --md-footer-fg-color--light: #7c7082;
+  --md-footer-fg-color--lighter: #aa9fb0;
+  --md-footer-bg-color--dark: #f7f2f8;
+
+  --lr-inline-bg: #fcebf2;
+  --lr-inline-fg: #a5154a;
+  --lr-canvas: #fdfbfd;
+  --lr-header-bg: #fff8fb;
+  --lr-surface: #ffffff;
+  --lr-soft: #f8f2f7;
+  --lr-ink: #241d26;
+  --lr-body: #3b3340;
+  --lr-secondary: #5f5567;
+  --lr-muted: #7c7082;
+  --lr-hairline: rgb(48 32 44 / 9%);
+  --lr-hairline-strong: rgb(48 32 44 / 15%);
+  --lr-hover: rgb(48 32 44 / 4%);
+  --lr-zebra: rgb(48 32 44 / 2%);
+  --lr-link-underline: rgb(208 47 102 / 30%);
+  --lr-pop-shadow: 0 8px 24px rgb(48 32 44 / 8%);
+  --lr-accent: #e0447c;
+  --lr-accent-ink: #d02f66;
+  --lr-accent-strong: #c2185b;
+  --lr-accent-hover: #a5154a;
+  --lr-accent-soft: #fde8f0;
+  --lr-petal-pink: #fde8f0;
+  --lr-petal-sky: #e6f3fc;
+  --lr-petal-lilac: #f0eafc;
+  --lr-petal-butter: #fff6de;
+  --lr-sky: #2e7ea8;
+  --lr-sky-soft: #e6f3fc;
+  --lr-lilac: #6b4fbb;
+  --lr-lilac-soft: #f0eafc;
+  --lr-butter: #8a6a00;
+  --lr-butter-soft: #fff6de;
+  --lr-code-bg: #f7f2fd;
+  --lr-code-fg: #2b2231;
+  --lr-code-border: rgb(80 56 96 / 14%);
+  --lr-code-muted: #73667e;
+  --lr-token-keyword: #b32455;
+  --lr-token-string: #1f6f8b;
+  --lr-token-number: #8a6a00;
+  --lr-token-annotation: #6b4fbb;
+  --lr-token-name: #a33a63;
+  --lr-token-comment: #73667e;
+  --lr-token-punct: #665b6f;
+  --lr-shadow: 0 1px 2px rgb(48 32 44 / 5%);
+}
+
+/* --------------------------------------------------------------------------
+   Dark scheme
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #ffa8c8;
+  --md-primary-fg-color--light: #ffc0d8;
+  --md-primary-fg-color--dark: #e06a99;
+  --md-primary-bg-color: #171319;
+
+  --md-accent-fg-color: #ffa8c8;
+  --md-accent-fg-color--transparent: rgb(255 168 200 / 14%);
+
+  --md-default-fg-color: #f6eef2;
+  --md-default-fg-color--light: #c4b6bf;
+  --md-default-fg-color--lighter: #9a8d96;
+  --md-default-fg-color--lightest: #332c36;
+  --md-default-bg-color: #171319;
+
+  --md-typeset-color: #e4d9df;
+  --md-typeset-a-color: #ffa8c8;
+
+  --md-code-bg-color: #1e1821;
+  --md-code-fg-color: #f5eef2;
+
+  --md-footer-bg-color: #1b161e;
+  --md-footer-fg-color: #c4b6bf;
+  --md-footer-fg-color--light: #9a8d96;
+  --md-footer-fg-color--lighter: #776b74;
+  --md-footer-bg-color--dark: #151117;
+
+  --lr-inline-bg: #2a232c;
+  --lr-inline-fg: #ffc0d8;
+  --lr-canvas: #171319;
+  --lr-header-bg: #1d1720;
+  --lr-surface: #201a22;
+  --lr-soft: #2a232c;
+  --lr-ink: #f6eef2;
+  --lr-body: #e4d9df;
+  --lr-secondary: #c4b6bf;
+  --lr-muted: #9a8d96;
+  --lr-hairline: rgb(246 238 242 / 10%);
+  --lr-hairline-strong: rgb(246 238 242 / 16%);
+  --lr-hover: rgb(246 238 242 / 6%);
+  --lr-zebra: rgb(246 238 242 / 3%);
+  --lr-link-underline: rgb(255 168 200 / 35%);
+  --lr-pop-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  --lr-accent: #ffa8c8;
+  --lr-accent-ink: #ffc0d8;
+  --lr-accent-strong: #ffc0d8;
+  --lr-accent-hover: #ffd6e5;
+  --lr-accent-soft: rgb(255 168 200 / 14%);
+  --lr-petal-pink: rgb(255 168 200 / 14%);
+  --lr-petal-sky: rgb(159 211 238 / 12%);
+  --lr-petal-lilac: rgb(203 182 242 / 14%);
+  --lr-petal-butter: rgb(255 227 163 / 12%);
+  --lr-sky: #8fcbe8;
+  --lr-sky-soft: rgb(143 203 232 / 10%);
+  --lr-lilac: #cbb6f2;
+  --lr-lilac-soft: rgb(203 182 242 / 10%);
+  --lr-butter: #ffe3a3;
+  --lr-butter-soft: rgb(255 227 163 / 10%);
+  --lr-code-bg: #1e1821;
+  --lr-code-fg: #f5eef2;
+  --lr-code-border: rgb(255 255 255 / 7%);
+  --lr-code-muted: #8d8290;
+  --lr-token-keyword: #ff9ec4;
+  --lr-token-string: #9fd3ee;
+  --lr-token-number: #ffe3a3;
+  --lr-token-annotation: #cbb6f2;
+  --lr-token-name: #ffd3e2;
+  --lr-token-comment: #8d8290;
+  --lr-token-punct: #c9bcc6;
+  --lr-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+/* --------------------------------------------------------------------------
+   Page canvas and type
+   -------------------------------------------------------------------------- */
+
+body {
+  --md-text-font-family: "Noto Sans SC", "Source Han Sans SC", "PingFang SC",
+    "HarmonyOS Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI",
+    sans-serif;
+  --md-code-font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular",
+    Consolas, "Liberation Mono", monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--md-default-bg-color);
+}
+
+::selection {
+  color: #3a1020;
+  background: #ffd3e3;
+}
+
+[data-md-color-scheme="slate"] ::selection {
+  color: #171319;
+  background: #ffb7d2;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lr-accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.md-header {
+  color: var(--lr-ink);
+  background: var(--lr-header-bg);
+  border-top: 0;
+  border-bottom: 1px solid var(--lr-hairline);
+  box-shadow: inset 0 2px 0 var(--lr-accent);
+}
+
+.md-header.md-header--shadow {
+  box-shadow: inset 0 2px 0 var(--lr-accent);
+}
+
+.md-header__inner {
+  height: 2.4rem;
+}
+
+.md-header__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.md-header__topic {
+  font-weight: 600;
+}
+
+.md-header__button {
+  color: var(--lr-muted);
+  opacity: 1;
+  transition: color 150ms ease;
+}
+
+.md-header__button:hover {
+  color: var(--lr-ink);
+}
+
+.md-logo img,
+.md-logo svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+.md-source {
+  color: var(--lr-secondary);
+  font-size: 0.6rem;
+  transition: color 150ms ease;
+}
+
+.md-source:hover {
+  color: var(--lr-ink);
+}
+
+.md-source__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.md-source__repository {
+  max-width: 12rem;
+}
+
+/* Search ------------------------------------------------------------------ */
+
+.md-search__form {
+  background-color: var(--lr-surface);
+  border: 1px solid var(--lr-hairline);
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.md-search__form:hover {
+  background-color: var(--lr-surface);
+  border-color: var(--lr-hairline-strong);
+}
+
+.md-search__form:focus-within {
+  border-color: var(--lr-accent);
+  box-shadow: 0 0 0 3px var(--lr-accent-soft);
+}
+
+.md-search__input {
+  color: var(--lr-ink);
+  font-size: 0.65rem;
+}
+
+.md-search__input::placeholder {
+  color: var(--lr-muted);
+}
+
+.md-search__icon {
+  color: var(--lr-muted);
+}
+
+.md-search__output {
+  background-color: var(--lr-surface);
+  border: 1px solid var(--lr-hairline);
+  border-radius: 8px;
+  box-shadow: var(--lr-pop-shadow);
+}
+
+/* Search excerpts are page content, not code panels: keep them on paper. */
+.md-search-result__article pre {
+  background: var(--lr-soft);
+  border: 1px solid var(--lr-hairline);
+  border-radius: 6px;
+}
+
+.md-search-result__article pre code {
+  color: var(--lr-body);
+  background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Left navigation
+   -------------------------------------------------------------------------- */
+
+.md-sidebar__scrollwrap {
+  scrollbar-width: none;
+}
+
+.md-sidebar__scrollwrap::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.md-nav--primary .md-nav__title[for="__drawer"] {
+  color: var(--lr-ink);
+  background: var(--lr-header-bg);
+  border-bottom: 1px solid var(--lr-hairline);
+  box-shadow: none;
+}
+
+@media screen and (min-width: 76.25em) {
+  /* The header already carries the wordmark on desktop. */
+  .md-nav--primary .md-nav__title[for="__drawer"] {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__title[for="__drawer"] {
+    height: 3.2rem;
+    padding: 0 1rem 0 3.2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .md-nav--primary .md-nav__title[for="__drawer"] .md-logo img,
+  .md-nav--primary .md-nav__title[for="__drawer"] .md-logo svg {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+}
+
+.md-nav--primary .md-nav__title[for="__drawer"] .md-nav__button {
+  color: var(--lr-muted);
+}
+
+.md-nav__source {
+  color: var(--lr-secondary);
+  background: var(--lr-soft);
+  border-bottom: 1px solid var(--lr-hairline);
+}
+
+.md-nav__source .md-source {
+  color: inherit;
+}
+
+/* One quiet rhythm: direct pages, section labels and child links each have
+   a fixed height, one indent step and no per-row decoration. */
+.md-nav--primary > .md-nav__list {
+  padding: 0.5rem 0.6rem 1.5rem;
+}
+
+.md-nav--primary .md-nav__item {
+  font-size: inherit;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > a.md-nav__link {
+  min-height: 1.8rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.95rem;
+  color: var(--lr-body);
+  font-size: 0.675rem;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > a.md-nav__link:hover {
+  color: var(--lr-ink);
+  background-color: var(--lr-hover);
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > a.md-nav__link--active {
+  color: var(--lr-accent-strong);
+  background-color: var(--lr-accent-soft);
+  font-weight: 600;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > label.md-nav__link--active {
+  color: var(--lr-accent-strong);
+  background-color: var(--lr-accent-soft);
+  font-weight: 600;
+}
+
+/* Section labels are group headers, not peers of pages. */
+.md-nav--primary > .md-nav__list > .md-nav__item--section {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--lr-hairline);
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item--section > label.md-nav__link {
+  min-height: 1.5rem;
+  padding: 0.2rem 0.5rem;
+  color: var(--lr-secondary);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+  transition: color 150ms ease;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item--section > label.md-nav__link:hover {
+  color: var(--lr-ink);
+  background-color: transparent;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item--section > .md-nav {
+  padding-bottom: 0.35rem;
+}
+
+/* Child pages sit one step in, with the petal marking the current page. */
+.md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link {
+  min-height: 1.7rem;
+  padding: 0.3rem 0.5rem 0.3rem 1.6rem;
+  color: var(--lr-secondary);
+  font-size: 0.66rem;
+  font-weight: 400;
+  border-radius: 6px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link:hover {
+  color: var(--lr-ink);
+  background-color: var(--lr-hover);
+}
+
+.md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link.md-nav__link--active {
+  color: var(--lr-accent-strong);
+  background-color: var(--lr-accent-soft);
+  font-weight: 600;
+}
+
+/* The petal: the one repeatable brand detail. */
+.md-nav--primary a.md-nav__link {
+  position: relative;
+}
+
+.md-nav--primary a.md-nav__link::before {
+  position: absolute;
+  top: 50%;
+  left: 0.55rem;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-top: -0.15rem;
+  content: "";
+  background: var(--lr-accent);
+  border-radius: 50% 50% 50% 1px;
+  opacity: 0;
+  transform: rotate(-45deg);
+  transition: opacity 150ms ease;
+}
+
+.md-nav--primary a.md-nav__link--active::before {
+  opacity: 1;
+}
+
+.md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link::before {
+  left: 1.2rem;
+}
+
+/* Drawer titles for nested sections. */
+.md-nav--primary .md-nav:not(.md-nav--secondary) .md-nav__title {
+  color: var(--lr-ink);
+  background: var(--lr-header-bg);
+  border-bottom: 1px solid var(--lr-hairline);
+  box-shadow: none;
+}
+
+.md-nav--primary .md-nav:not(.md-nav--secondary) .md-nav__title .md-nav__icon {
+  color: var(--lr-muted);
+}
+
+/* Mobile drawer: touch-sized rows, same hierarchy. */
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary > .md-nav__list {
+    padding: 0.5rem 0.75rem 2rem;
+  }
+
+  .md-nav--primary > .md-nav__list > .md-nav__item > a.md-nav__link {
+    min-height: 2.2rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link {
+    min-height: 2rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .md-nav--primary > .md-nav__list > .md-nav__item--section > label.md-nav__link {
+    min-height: 2rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+    font-size: 0.62rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Right-hand table of contents
+   -------------------------------------------------------------------------- */
+
+.md-nav--secondary .md-nav__title {
+  padding: 0 0.9rem 0.5rem;
+  color: var(--lr-muted);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: transparent;
+  border-bottom: 1px solid var(--lr-hairline);
+  box-shadow: none;
+}
+
+.md-nav--secondary .md-nav__list {
+  padding-top: 0.4rem;
+}
+
+[dir="ltr"] .md-nav--secondary .md-nav__link {
+  padding-left: 0.9rem;
+}
+
+[dir="rtl"] .md-nav--secondary .md-nav__link {
+  padding-right: 0.9rem;
+}
+
+.md-nav--secondary .md-nav__link {
+  padding-top: 0.28rem;
+  padding-bottom: 0.28rem;
+  color: var(--lr-secondary);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  border-radius: 4px;
+  box-shadow: inset 2px 0 0 transparent;
+  transition: color 150ms ease, background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.md-nav--secondary .md-nav__link:hover {
+  color: var(--lr-ink);
+  background-color: transparent;
+  box-shadow: inset 2px 0 0 var(--lr-hairline-strong);
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--lr-accent-ink);
+  background-color: transparent;
+  box-shadow: inset 2px 0 0 var(--lr-accent);
+  font-weight: 600;
+}
+
+.md-nav--secondary .md-nav__link--active:hover {
+  color: var(--lr-accent-ink);
+  background-color: transparent;
+  box-shadow: inset 2px 0 0 var(--lr-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Content typography
+   -------------------------------------------------------------------------- */
+
+.md-typeset {
+  color: var(--lr-body);
+  font-size: 0.8rem;
+  line-height: 1.8;
+}
+
+.md-typeset h1 {
+  margin: 0 0 1rem;
+  color: var(--lr-ink);
+  font-size: 1.65rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.md-typeset h2 {
+  margin: 2.2rem 0 0.9rem;
+  padding-bottom: 0.45rem;
+  color: var(--lr-ink);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--lr-hairline);
+}
+
+.md-typeset h3 {
+  margin: 1.7rem 0 0.6rem;
+  color: var(--lr-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.md-typeset h4 {
+  margin: 1.4rem 0 0.5rem;
+  color: var(--lr-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.md-typeset p,
+.md-typeset ul,
+.md-typeset ol {
+  margin: 0.8em 0;
+}
+
+.md-typeset strong {
+  color: var(--lr-ink);
+  font-weight: 600;
+}
+
+.md-typeset a {
+  color: var(--lr-accent-ink);
+  text-decoration-color: var(--lr-link-underline);
+  text-underline-offset: 0.16em;
+  transition: color 150ms ease;
+}
+
+.md-typeset a:hover {
+  color: var(--lr-accent-hover);
+  text-decoration-color: currentcolor;
+}
+
+.md-typeset hr {
+  border-bottom-color: var(--lr-hairline);
+}
+
+/* The tagline under the home title reads as a lead, not a quote. */
+[dir="ltr"] .md-typeset h1 + blockquote,
+[dir="rtl"] .md-typeset h1 + blockquote {
+  margin: 0 0 1.2rem;
+  padding: 0;
+  color: var(--lr-secondary);
+  background: transparent;
+  border: 0;
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+[dir="ltr"] .md-typeset blockquote {
+  padding-left: 1rem;
+  border-left: 2px solid var(--lr-lilac);
+}
+
+[dir="rtl"] .md-typeset blockquote {
+  padding-right: 1rem;
+  border-right: 2px solid var(--lr-lilac);
+}
+
+.md-typeset blockquote {
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  color: var(--lr-secondary);
+  background: var(--lr-petal-lilac);
+  border-top: 0;
+  border-bottom: 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.md-typeset blockquote > :first-child {
+  margin-top: 0;
+}
+
+.md-typeset blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Code
+   -------------------------------------------------------------------------- */
+
+.md-typeset code {
+  padding: 0.1em 0.32em;
+  color: var(--lr-inline-fg);
+  background-color: var(--lr-inline-bg);
+  border-radius: 4px;
+  font-size: 0.82em;
+}
+
+/* The code page is paper too: pale lilac stock, ink text, four petal inks.
+   On the dark scheme it becomes the same page under a lamp. */
+.md-typeset .highlight {
+  overflow: hidden;
+  background: var(--lr-code-bg);
+  border: 1px solid var(--lr-code-border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.md-typeset .highlight pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(80 56 96 / 20%) transparent;
+}
+
+.md-typeset .highlight pre > code {
+  padding: 0;
+  color: var(--lr-code-fg);
+  background: transparent;
+  font-size: 0.66rem;
+  line-height: 1.75;
+  border-radius: 0;
+}
+
+.md-typeset .highlight .md-code__nav {
+  background: transparent;
+}
+
+.md-typeset .highlight .md-code__button {
+  color: var(--lr-code-muted);
+  border-radius: 4px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.md-typeset .highlight .md-code__button:hover {
+  color: var(--lr-ink);
+  background-color: rgb(80 56 96 / 7%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight pre {
+  scrollbar-color: rgb(255 255 255 / 18%) transparent;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .md-code__button:hover {
+  color: rgb(255 255 255 / 85%);
+  background-color: rgb(255 255 255 / 8%);
+}
+
+/* Java tokens: rose keywords, sky strings, butter numbers, lilac annotations. */
+.md-typeset .highlight .k,
+.md-typeset .highlight .kd,
+.md-typeset .highlight .kn,
+.md-typeset .highlight .kt,
+.md-typeset .highlight .kc {
+  color: var(--lr-token-keyword);
+}
+
+.md-typeset .highlight .s,
+.md-typeset .highlight .s1,
+.md-typeset .highlight .s2,
+.md-typeset .highlight .sd {
+  color: var(--lr-token-string);
+}
+
+.md-typeset .highlight .mi,
+.md-typeset .highlight .mf,
+.md-typeset .highlight .m {
+  color: var(--lr-token-number);
+}
+
+.md-typeset .highlight .nd {
+  color: var(--lr-token-annotation);
+}
+
+.md-typeset .highlight .na,
+.md-typeset .highlight .nf,
+.md-typeset .highlight .no {
+  color: var(--lr-token-name);
+}
+
+.md-typeset .highlight .nn {
+  color: var(--lr-token-punct);
+}
+
+.md-typeset .highlight .c,
+.md-typeset .highlight .c1,
+.md-typeset .highlight .cm {
+  color: var(--lr-token-comment);
+}
+
+.md-typeset .highlight .o,
+.md-typeset .highlight .p {
+  color: var(--lr-token-punct);
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+
+.md-typeset table:not([class]) {
+  width: 100%;
+  overflow: hidden;
+  background: var(--lr-surface);
+  border: 1px solid var(--lr-hairline);
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.68rem;
+}
+
+.md-typeset table:not([class]) th {
+  padding: 0.55rem 0.75rem;
+  color: var(--lr-ink);
+  background: var(--lr-soft);
+  border-bottom: 1px solid var(--lr-hairline);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.md-typeset table:not([class]) td {
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--lr-hairline);
+  vertical-align: top;
+}
+
+.md-typeset table:not([class]) th:first-child,
+.md-typeset table:not([class]) td:first-child {
+  width: 10%;
+}
+
+.md-typeset table:not([class]) td:first-child code {
+  white-space: nowrap;
+}
+
+.md-typeset table:not([class]) code {
+  padding: 0;
+  background: transparent;
+}
+
+/* The error-code table groups the enum and exception class in one cell;
+   give those identifiers enough room to stay on one line. */
+.md-typeset .lr-error-codes table th:first-child,
+.md-typeset .lr-error-codes table td:first-child {
+  width: 9%;
+}
+
+.md-typeset .lr-error-codes table th:nth-child(2),
+.md-typeset .lr-error-codes table td:nth-child(2) {
+  width: 28%;
+}
+
+.md-typeset .lr-error-codes table th:nth-child(4),
+.md-typeset .lr-error-codes table td:nth-child(4) {
+  width: 11%;
+}
+
+.md-typeset table:not([class]) tbody tr:nth-child(2n) {
+  background-color: var(--lr-zebra);
+}
+
+.md-typeset table:not([class]) tbody tr:hover {
+  background-color: var(--lr-accent-soft);
+}
+
+/* Material shrinks tables to their content on desktop; give them the full
+   measure so four-column contract tables stay readable. Mobile keeps the
+   horizontal scroll wrapper. */
+@media screen and (min-width: 48em) {
+  .md-typeset .md-typeset__table {
+    display: block;
+  }
+
+  .md-typeset .md-typeset__table table {
+    display: table;
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 47.9375em) {
+  .md-typeset .md-typeset__table {
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md-typeset .md-typeset__table table {
+    display: table;
+    width: auto;
+    min-width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Admonitions and details
+   -------------------------------------------------------------------------- */
+
+.md-typeset .admonition,
+.md-typeset details {
+  overflow: hidden;
+  background: var(--lr-surface);
+  border: 1px solid var(--lr-hairline);
+  border-left: 3px solid var(--lr-accent);
+  border-radius: 8px;
+  box-shadow: none;
+  font-size: 0.72rem;
+}
+
+.md-typeset .admonition > .admonition-title,
+.md-typeset details > summary {
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+  color: var(--lr-ink);
+  background: transparent;
+  border-bottom: 1px solid var(--lr-hairline);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.md-typeset .admonition.note,
+.md-typeset details.note,
+.md-typeset .admonition.info,
+.md-typeset details.info {
+  border-color: var(--lr-hairline);
+  border-left-color: var(--lr-accent);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: var(--lr-hairline);
+  border-left-color: var(--lr-sky);
+}
+
+.md-typeset .admonition.warning,
+.md-typeset details.warning {
+  border-color: var(--lr-hairline);
+  border-left-color: var(--lr-butter);
+}
+
+.md-typeset .admonition.note > .admonition-title::before,
+.md-typeset .admonition.info > .admonition-title::before {
+  background-color: var(--lr-accent-strong);
+}
+
+.md-typeset .admonition.tip > .admonition-title::before {
+  background-color: var(--lr-sky);
+}
+
+.md-typeset .admonition.warning > .admonition-title::before {
+  background-color: var(--lr-butter);
+}
+
+.md-typeset .admonition.note > .admonition-title,
+.md-typeset details.note > summary,
+.md-typeset .admonition.info > .admonition-title,
+.md-typeset details.info > summary {
+  background: var(--lr-petal-pink);
+}
+
+.md-typeset .admonition.tip > .admonition-title,
+.md-typeset details.tip > summary {
+  background: var(--lr-petal-sky);
+}
+
+.md-typeset .admonition.warning > .admonition-title,
+.md-typeset details.warning > summary {
+  background: var(--lr-petal-butter);
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.md-footer {
+  color: var(--lr-secondary);
+  background: var(--md-footer-bg-color);
+  border-top: 1px solid var(--lr-hairline);
+}
+
+.md-footer-meta {
+  background: transparent;
+}
+
+.md-footer-meta.md-typeset a {
+  color: var(--lr-secondary);
+}
+
+.md-footer-meta.md-typeset a:hover {
+  color: var(--lr-ink);
+}
+
+.md-footer__link {
+  color: var(--lr-ink);
+}
+
+.md-footer__direction {
+  color: var(--lr-muted);
+  font-size: 0.55rem;
+  letter-spacing: 0.02em;
+}
+
+.md-footer__title {
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.md-copyright {
+  color: var(--lr-muted);
+  font-size: 0.55rem;
+}
+
+.md-copyright__highlight {
+  color: var(--lr-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Small screens
+   -------------------------------------------------------------------------- */
+
+@media screen and (max-width: 44.9375em) {
+  .md-typeset h1 {
+    font-size: 1.45rem;
+  }
+
+  .md-typeset h2 {
+    margin-top: 1.8rem;
+    font-size: 1rem;
+  }
+
+  /* Keep the copy button above the first line instead of on top of it. */
+  .md-typeset .highlight pre {
+    padding: 2rem 1rem 0.85rem;
+  }
+}

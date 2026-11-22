@@ -16,13 +16,11 @@
         <link rel="prev" href="../api/">
       
       
-        <link rel="next" href="../../requirements/v1.1/">
-      
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/rose.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
@@ -46,6 +44,8 @@
     
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -94,8 +94,7 @@
   <nav class="md-header__inner md-grid" aria-label="页眉">
     <a href="../.." title="LumiRose" class="md-header__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/rose.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -232,8 +231,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LumiRose" class="md-nav__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/rose.svg" alt="logo">
 
     </a>
     LumiRose
@@ -879,60 +877,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../requirements/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    需求
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../testing/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    测试
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -1057,12 +1001,12 @@
 </code></pre></div>
 <p><code>9001 INTERNAL_ERROR</code> 直接使用 <code>LumiRoseException</code> 基类。<code>ClientException.retriable()</code> 是重试判断的唯一入口。</p>
 <h2 id="_3">错误码表<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<div class="lr-error-codes">
 <table>
 <thead>
 <tr>
 <th>码</th>
-<th>枚举</th>
-<th>异常类</th>
+<th>枚举 / 异常类</th>
 <th>触发场景</th>
 <th>可重试</th>
 </tr>
@@ -1070,146 +1014,127 @@
 <tbody>
 <tr>
 <td>1001</td>
-<td><code>CONFIG_INVALID</code></td>
-<td><code>ConfigurationException</code></td>
+<td><code>CONFIG_INVALID</code><br><code>ConfigurationException</code></td>
 <td>Client/Agent 配置非法、工具定义非法、压缩窗口/阈值非法、Schema 不支持的类型</td>
 <td>否</td>
 </tr>
 <tr>
 <td>1002</td>
-<td><code>PARAM_INVALID</code></td>
-<td><code>AgentException</code></td>
+<td><code>PARAM_INVALID</code><br><code>AgentException</code></td>
 <td><code>content</code> 为 null/空白、消息构造非法</td>
 <td>否</td>
 </tr>
 <tr>
 <td>2001</td>
-<td><code>CLIENT_HTTP_ERROR</code></td>
-<td><code>ClientException</code></td>
+<td><code>CLIENT_HTTP_ERROR</code><br><code>ClientException</code></td>
 <td>模型请求返回非 2xx，包括 400 上下文超限</td>
 <td>仅 429、5xx</td>
 </tr>
 <tr>
 <td>2002</td>
-<td><code>CLIENT_RESPONSE_INVALID</code></td>
-<td><code>ClientException</code></td>
+<td><code>CLIENT_RESPONSE_INVALID</code><br><code>ClientException</code></td>
 <td>2xx 但 SSE 语法/结构非法、空响应、缺 <code>finish_reason</code>、tool_calls 冲突</td>
 <td>否</td>
 </tr>
 <tr>
 <td>2003</td>
-<td><code>CLIENT_IO_ERROR</code></td>
-<td><code>ClientException</code></td>
+<td><code>CLIENT_IO_ERROR</code><br><code>ClientException</code></td>
 <td>连接失败、读写超时、连接重置</td>
 <td>是</td>
 </tr>
 <tr>
 <td>3001</td>
-<td><code>AGENT_TURN_LIMIT</code></td>
-<td><code>AgentException</code></td>
+<td><code>AGENT_TURN_LIMIT</code><br><code>AgentException</code></td>
 <td><code>maxTurns</code> 次请求后仍无最终文本</td>
 <td>否</td>
 </tr>
 <tr>
 <td>3002</td>
-<td><code>AGENT_OUTPUT_TRUNCATED</code></td>
-<td><code>AgentException</code></td>
+<td><code>AGENT_OUTPUT_TRUNCATED</code><br><code>AgentException</code></td>
 <td><code>finish_reason=length</code></td>
 <td>否</td>
 </tr>
 <tr>
 <td>3003</td>
-<td><code>AGENT_RESPONSE_INVALID</code></td>
-<td><code>AgentException</code></td>
+<td><code>AGENT_RESPONSE_INVALID</code><br><code>AgentException</code></td>
 <td><code>finish_reason</code> 非 <code>stop</code>、最终 <code>content</code> 空白</td>
 <td>否</td>
 </tr>
 <tr>
 <td>3004</td>
-<td><code>AGENT_CANCELLED</code></td>
-<td><code>AgentException</code></td>
+<td><code>AGENT_CANCELLED</code><br><code>AgentException</code></td>
 <td>调用 <code>cancel()</code>；退避等待被中断</td>
 <td>否</td>
 </tr>
 <tr>
 <td>3005</td>
-<td><code>AGENT_COMPRESSION_FAILED</code></td>
-<td><code>AgentException</code></td>
+<td><code>AGENT_COMPRESSION_FAILED</code><br><code>AgentException</code></td>
 <td>压缩请求失败、摘要为空、摘要被截断、压缩后缺 usage、重试耗尽</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4001</td>
-<td><code>TOOL_NOT_FOUND</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_NOT_FOUND</code><br><code>ToolException</code></td>
 <td>模型调用了未注册的工具</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4002</td>
-<td><code>TOOL_ARGS_INVALID</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_ARGS_INVALID</code><br><code>ToolException</code></td>
 <td>参数 JSON 非法，或工具自检失败</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4003</td>
-<td><code>TOOL_EXECUTION_FAILED</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_EXECUTION_FAILED</code><br><code>ToolException</code></td>
 <td>工具执行抛非 <code>LumiRoseException</code> 异常，或文件读写失败</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4004</td>
-<td><code>TOOL_PATH_INVALID</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_PATH_INVALID</code><br><code>ToolException</code></td>
 <td>路径越界、绝对路径、目标是目录</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4005</td>
-<td><code>TOOL_FILE_NOT_FOUND</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_FILE_NOT_FOUND</code><br><code>ToolException</code></td>
 <td>目标文件不存在</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4006</td>
-<td><code>TOOL_FILE_EXISTS</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_FILE_EXISTS</code><br><code>ToolException</code></td>
 <td>目标已存在且未授权覆盖</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4007</td>
-<td><code>TOOL_EDIT_NO_MATCH</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_EDIT_NO_MATCH</code><br><code>ToolException</code></td>
 <td><code>edit_file</code> 的 <code>old_string</code> 未匹配</td>
 <td>否</td>
 </tr>
 <tr>
 <td>4008</td>
-<td><code>TOOL_EDIT_NOT_UNIQUE</code></td>
-<td><code>ToolException</code></td>
+<td><code>TOOL_EDIT_NOT_UNIQUE</code><br><code>ToolException</code></td>
 <td><code>edit_file</code> 的 <code>old_string</code> 匹配多处</td>
 <td>否</td>
 </tr>
 <tr>
 <td>5001</td>
-<td><code>STORAGE_FAILED</code></td>
-<td><code>StorageException</code></td>
+<td><code>STORAGE_FAILED</code><br><code>StorageException</code></td>
 <td>仓储读写失败、DO/entity 转换失败</td>
 <td>否</td>
 </tr>
 <tr>
 <td>9001</td>
-<td><code>INTERNAL_ERROR</code></td>
-<td><code>LumiRoseException</code></td>
+<td><code>INTERNAL_ERROR</code><br><code>LumiRoseException</code></td>
 <td>未归类的内部错误</td>
 <td>否</td>
 </tr>
 </tbody>
 </table>
+</div>
 <h2 id="http">HTTP 状态映射<a class="headerlink" href="#http" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1418,7 +1343,7 @@
 <li><code>apiKey</code> 不得出现在异常消息、cause、日志或 <code>toString()</code> 中。</li>
 <li>异常消息不包含消息内容、工具参数/结果、请求/响应体原文。</li>
 <li>2001 只提取 HTTP 状态与厂商 <code>error</code> 的 <code>code</code>/<code>type</code>，不包含厂商 <code>error.message</code>。</li>
-<li>错误码是公开契约；新增或改码需要同步更新本页与 <a href="../../requirements/v1.1/">v1.1 需求</a>。</li>
+<li>错误码是公开契约；新增或改码需要同步更新本页与相关实现。</li>
 </ul>
 
 
@@ -1470,22 +1395,6 @@
             </div>
           </a>
         
-        
-          
-          <a href="../../requirements/v1.1/" class="md-footer__link md-footer__link--next" aria-label="下一页: 需求">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                下一页
-              </span>
-              <div class="md-ellipsis">
-                需求
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
         
       </nav>
     

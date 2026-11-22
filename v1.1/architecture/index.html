@@ -22,7 +22,7 @@
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../assets/rose.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
@@ -46,6 +46,8 @@
     
       
     
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -94,8 +96,7 @@
   <nav class="md-header__inner md-grid" aria-label="页眉">
     <a href=".." title="LumiRose" class="md-header__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../assets/rose.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -232,8 +233,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href=".." title="LumiRose" class="md-nav__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../assets/rose.svg" alt="logo">
 
     </a>
     LumiRose
@@ -923,60 +923,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../requirements/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    需求
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../testing/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    测试
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -1150,7 +1096,7 @@
 │   └── enums/        FinishReason、MessageRole
 ├── model/
 │   ├── entity/       Conversation、Message、ToolCall
-│   ├── do/           ConversationDO、MessageDO、ToolCallDO
+│   ├── data/         ConversationDO、MessageDO、ToolCallDO
 │   ├── convert/      entity ↔ DO
 │   └── dto/chat/     ChatCompletion*
 ├── repository/       ConversationRepository + impl
@@ -1161,10 +1107,10 @@
 common.result      ← 无
 common.enums       ← 无
 model.entity       → common.enums
-model.do           ← 无
+model.data         ← 无
 model.dto.chat     → common.enums (+ Jackson)
-model.convert      → model.entity + model.do
-repository         → model.entity + model.do + model.convert
+model.convert      → model.entity + model.data
+repository         → model.entity + model.data + model.convert
 client             → model.dto.chat + common.exception
 agent              → model.entity + model.dto.chat + repository + client + tool + common
 tool               → common.exception
@@ -1172,8 +1118,8 @@ tool               → common.exception
 <p>约束：</p>
 <ul>
 <li><code>client</code> 不依赖 <code>agent</code> / <code>repository</code>；</li>
-<li><code>model.entity</code> 不依赖 <code>model.do</code> / <code>model.dto</code>；</li>
-<li><code>agent</code> 不直接使用 <code>model.do</code> / <code>model.convert</code>；</li>
+<li><code>model.entity</code> 不依赖 <code>model.data</code> / <code>model.dto</code>；</li>
+<li><code>agent</code> 不直接使用 <code>model.data</code> / <code>model.convert</code>；</li>
 <li><code>tool</code> 不依赖模型层。</li>
 </ul>
 <h2 id="_5">三套模型<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
@@ -1198,7 +1144,7 @@ tool               → common.exception
 </tr>
 <tr>
 <td>DO</td>
-<td><code>model.do.ConversationDO</code>、<code>MessageDO</code>、<code>ToolCallDO</code></td>
+<td><code>model.data.ConversationDO</code>、<code>MessageDO</code>、<code>ToolCallDO</code></td>
 <td>关系型数据库映射</td>
 </tr>
 </tbody>

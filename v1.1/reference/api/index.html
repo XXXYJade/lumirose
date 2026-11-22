@@ -22,7 +22,7 @@
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/rose.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
@@ -46,6 +46,8 @@
     
       
     
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -94,8 +96,7 @@
   <nav class="md-header__inner md-grid" aria-label="页眉">
     <a href="../.." title="LumiRose" class="md-header__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/rose.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -232,8 +233,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="../.." title="LumiRose" class="md-nav__button md-logo" aria-label="LumiRose" data-md-component="logo">
       
-  
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <img src="../../assets/rose.svg" alt="logo">
 
     </a>
     LumiRose
@@ -945,60 +945,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../requirements/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    需求
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../testing/v1.1/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    测试
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -1178,7 +1124,7 @@
 
 
 <h1 id="api">API 参考<a class="headerlink" href="#api" title="Permanent link">&para;</a></h1>
-<p>本页只列公开类型与稳定方法。未列出的类（如 <code>SseAccumulator</code>）是实现细节，不构成契约。完整行为见 <a href="../../requirements/v1.1/">v1.1 需求</a>。</p>
+<p>本页只列公开类型与稳定方法。未列出的类（如 <code>SseAccumulator</code>）是实现细节，不构成契约。</p>
 <h2 id="_1">包结构<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>io.github.xxxyjade.lumirose
 ├── agent            LumiRoseAgent
@@ -1188,12 +1134,12 @@
 ├── common.enums     MessageRole、FinishReason
 ├── model.entity     Conversation、Message、ToolCall
 ├── model.dto.chat   ChatCompletionRequest / Response / Message / Tool / ToolCall / Usage
-├── model.do         ConversationDO、MessageDO、ToolCallDO（持久化支撑）
+├── model.data         ConversationDO、MessageDO、ToolCallDO（持久化支撑）
 ├── model.convert    Converter（持久化支撑）
 ├── repository       ConversationRepository、InMemoryConversationRepository
-└── tool             Tool、ToolContext、ToolParameters、tool.impl.*
+└── tool             Tool、ToolContext、ToolParameters、EmptyParameters、tool.impl.*
 </code></pre></div>
-<p><code>model.do</code> 与 <code>model.convert</code> 是 public 的，但只服务仓储实现；业务代码不应使用。</p>
+<p><code>model.data</code> 与 <code>model.convert</code> 是 public 的，但只服务仓储实现；业务代码不应使用。</p>
 <h2 id="lumiroseclient">LumiRoseClient<a class="headerlink" href="#lumiroseclient" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="n">LumiRoseClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LumiRoseClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
 <span class="w">        </span><span class="p">.</span><span class="na">baseUrl</span><span class="p">(</span><span class="s">"https://api.deepseek.com"</span><span class="p">)</span>
@@ -1349,14 +1295,15 @@
 <li>Agent 无可变状态，同一实例可跨线程复用。</li>
 </ul>
 <h2 id="lumiroseresult">LumiRoseResult<a class="headerlink" href="#lumiroseresult" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">LumiRoseResult</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">content</span><span class="p">();</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">promptTokens</span><span class="p">();</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">completionTokens</span><span class="p">();</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">deltas</span><span class="p">();</span>
-<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">cancel</span><span class="p">();</span>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">LumiRoseResult</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="nf">content</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">promptTokens</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="nf">completionTokens</span><span class="p">();</span>
+<span class="w">    </span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">deltas</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">cancel</span><span class="p">();</span>
 <span class="p">}</span>
 </code></pre></div>
+<p><code>LumiRoseResult</code> 由框架实现，调用方不应自行实现。</p>
 <table>
 <thead>
 <tr>
@@ -1397,7 +1344,7 @@
 <li><code>deltas()</code> 只产出正文增量，不产出 reasoning、工具或轮次事件；其拼接等于 <code>content()</code>。</li>
 <li><code>content()</code> 是结果级拼接，不是单条历史消息；工具轮的 assistant 消息仍分别保存。</li>
 <li>运行失败时，<code>deltas()</code> 迭代抛出 <code>LumiRoseException</code>。</li>
-<li>不实现 <code>AutoCloseable</code>，没有 <code>close()</code>。</li>
+<li>不继承 <code>AutoCloseable</code>，没有 <code>close()</code>。</li>
 </ul>
 <h2 id="tool-toolcontext">Tool 与 ToolContext<a class="headerlink" href="#tool-toolcontext" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Tool</span><span class="w"> </span><span class="p">{</span>
@@ -1641,7 +1588,7 @@
 </tr>
 </tbody>
 </table>
-<p>DTO 只在 client 与 agent 边界使用，不进入 repository。工具 <code>arguments</code> 始终是字符串，不反序列化为对象。</p>
+<p>DTO 只在 client 与 agent 边界使用，不进入 repository。工具 <code>arguments</code> 始终是字符串，不反序列化为对象。DTO 都是不可变 <code>final class</code>，不使用 <code>record</code>；Jackson 通过构造器创建实例。</p>
 <h2 id="_5">持久化支撑类型<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
