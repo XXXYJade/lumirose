@@ -1,0 +1,74 @@
+site_name: LumiRose
+site_description: 学习导向、面向生产接入的 Java Agent 框架
+site_url: https://xxxyjade.github.io/lumirose/
+repo_url: https://github.com/xxxyjade/lumirose
+repo_name: xxxyjade/lumirose
+edit_uri: edit/master/docs/v1.1/
+docs_dir: docs/v1.1
+strict: true
+
+extra:
+  version:
+    provider: mike
+
+theme:
+  name: material
+  language: zh
+  font: false
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+exclude_docs: |
+  requirements/archive/
+
+nav:
+  - 首页: index.md
+  - 快速开始: quickstart.md
+  - 指南:
+      - 配置: configuration.md
+      - Agent 与结果: agent.md
+      - 流式输出: streaming.md
+      - 工具: tools.md
+      - 上下文压缩: context-compression.md
+      - 持久化: persistence.md
+  - 架构与决策:
+      - 架构总览: architecture.md
+      - 关键设计决策: design-decisions.md
+  - 参考:
+      - API: reference/api.md
+      - 错误码: reference/error-codes.md
+  - 需求: requirements/v1.1.md
+  - 测试: testing/v1.1.md

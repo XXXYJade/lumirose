@@ -1,0 +1,58 @@
+site_name: LumiRose v1
+site_description: LumiRose v1 冻结文档：同步、非流式的最小 Agent 框架
+site_url: https://xxxyjade.github.io/lumirose/
+repo_url: https://github.com/xxxyjade/lumirose
+repo_name: xxxyjade/lumirose
+edit_uri: edit/master/docs/v1/
+docs_dir: docs/v1
+strict: true
+
+extra:
+  version:
+    provider: mike
+
+theme:
+  name: material
+  language: zh
+  font: false
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+
+nav:
+  - 首页: index.md
+  - 快速开始: quickstart.md
+  - API: api.md
+  - 需求（冻结）: requirements.md

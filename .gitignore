@@ -43,3 +43,6 @@ build/
 ### editor state ###
 docs/.obsidian/
 docs/superpowers/.obsidian/
+
+### docs site ###
+site/
