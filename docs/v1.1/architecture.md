@@ -19,7 +19,7 @@ io.github.xxxyjade.lumirose
 │   └── enums/        FinishReason、MessageRole
 ├── model/
 │   ├── entity/       Conversation、Message、ToolCall
-│   ├── do/           ConversationDO、MessageDO、ToolCallDO
+│   ├── data/         ConversationDO、MessageDO、ToolCallDO
 │   ├── convert/      entity ↔ DO
 │   └── dto/chat/     ChatCompletion*
 ├── repository/       ConversationRepository + impl
@@ -33,7 +33,7 @@ common.exception   ← 无
 common.result      ← 无
 common.enums       ← 无
 model.entity       → common.enums
-model.data           ← 无
+model.data         ← 无
 model.dto.chat     → common.enums (+ Jackson)
 model.convert      → model.entity + model.data
 repository         → model.entity + model.data + model.convert

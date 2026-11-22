@@ -1,6 +1,6 @@
 # LumiRose
 
-一个**学习导向、同时以生产级 SDK 为目标**的 Java Agent 框架。把「模型调用 → 工具循环 → 流式输出 → 上下文压缩 → 会话持久化」收敛成一条能读完的链路。
+一个**学习导向、面向生产接入**的 Java Agent 框架。把「模型调用 → 工具循环 → 流式输出 → 上下文压缩 → 会话持久化」收敛成一条能读完的链路。
 
 > 文档按版本独立维护：**[v1.1（最新）](https://xxxyjade.github.io/lumirose/v1.1/)** ｜ **[v1（冻结）](https://xxxyjade.github.io/lumirose/v1/)**。两版 API 不同，不要混用。
 
@@ -10,7 +10,7 @@
 - 可替换持久化：只依赖 `ConversationRepository` SPI；内置内存实现，JDBC 由接入方实现。
 - Java 21、OkHttp、Jackson、SLF4J；`mvn -o test` 离线运行。
 
-## 30 秒示例
+## 最小示例
 
 ```java
 import io.github.xxxyjade.lumirose.agent.LumiRoseAgent;
@@ -76,7 +76,7 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 | [错误码](docs/v1.1/reference/error-codes.md) | 错误语义与处理建议 |
 | [v1 文档（冻结）](https://xxxyjade.github.io/lumirose/v1/) | 同步、非流式、DTO 仓储的旧版 |
 
-需求规格与测试计划保留在仓库中，作为工程记录，不进入公开文档站。
+内部工程记录保留在仓库中，不进入公开文档站。
 
 ## 状态
 

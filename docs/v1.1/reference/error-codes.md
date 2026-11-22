@@ -17,28 +17,32 @@ LumiRoseException (RuntimeException)
 
 ## 错误码表
 
-| 码 | 枚举 | 异常类 | 触发场景 | 可重试 |
-|---|---|---|---|---|
-| 1001 | `CONFIG_INVALID` | `ConfigurationException` | Client/Agent 配置非法、工具定义非法、压缩窗口/阈值非法、Schema 不支持的类型 | 否 |
-| 1002 | `PARAM_INVALID` | `AgentException` | `content` 为 null/空白、消息构造非法 | 否 |
-| 2001 | `CLIENT_HTTP_ERROR` | `ClientException` | 模型请求返回非 2xx，包括 400 上下文超限 | 仅 429、5xx |
-| 2002 | `CLIENT_RESPONSE_INVALID` | `ClientException` | 2xx 但 SSE 语法/结构非法、空响应、缺 `finish_reason`、tool_calls 冲突 | 否 |
-| 2003 | `CLIENT_IO_ERROR` | `ClientException` | 连接失败、读写超时、连接重置 | 是 |
-| 3001 | `AGENT_TURN_LIMIT` | `AgentException` | `maxTurns` 次请求后仍无最终文本 | 否 |
-| 3002 | `AGENT_OUTPUT_TRUNCATED` | `AgentException` | `finish_reason=length` | 否 |
-| 3003 | `AGENT_RESPONSE_INVALID` | `AgentException` | `finish_reason` 非 `stop`、最终 `content` 空白 | 否 |
-| 3004 | `AGENT_CANCELLED` | `AgentException` | 调用 `cancel()`；退避等待被中断 | 否 |
-| 3005 | `AGENT_COMPRESSION_FAILED` | `AgentException` | 压缩请求失败、摘要为空、摘要被截断、压缩后缺 usage、重试耗尽 | 否 |
-| 4001 | `TOOL_NOT_FOUND` | `ToolException` | 模型调用了未注册的工具 | 否 |
-| 4002 | `TOOL_ARGS_INVALID` | `ToolException` | 参数 JSON 非法，或工具自检失败 | 否 |
-| 4003 | `TOOL_EXECUTION_FAILED` | `ToolException` | 工具执行抛非 `LumiRoseException` 异常，或文件读写失败 | 否 |
-| 4004 | `TOOL_PATH_INVALID` | `ToolException` | 路径越界、绝对路径、目标是目录 | 否 |
-| 4005 | `TOOL_FILE_NOT_FOUND` | `ToolException` | 目标文件不存在 | 否 |
-| 4006 | `TOOL_FILE_EXISTS` | `ToolException` | 目标已存在且未授权覆盖 | 否 |
-| 4007 | `TOOL_EDIT_NO_MATCH` | `ToolException` | `edit_file` 的 `old_string` 未匹配 | 否 |
-| 4008 | `TOOL_EDIT_NOT_UNIQUE` | `ToolException` | `edit_file` 的 `old_string` 匹配多处 | 否 |
-| 5001 | `STORAGE_FAILED` | `StorageException` | 仓储读写失败、DO/entity 转换失败 | 否 |
-| 9001 | `INTERNAL_ERROR` | `LumiRoseException` | 未归类的内部错误 | 否 |
+<div class="lr-error-codes" markdown="1">
+
+| 码 | 枚举 / 异常类 | 触发场景 | 可重试 |
+|---|---|---|---|
+| 1001 | `CONFIG_INVALID`<br>`ConfigurationException` | Client/Agent 配置非法、工具定义非法、压缩窗口/阈值非法、Schema 不支持的类型 | 否 |
+| 1002 | `PARAM_INVALID`<br>`AgentException` | `content` 为 null/空白、消息构造非法 | 否 |
+| 2001 | `CLIENT_HTTP_ERROR`<br>`ClientException` | 模型请求返回非 2xx，包括 400 上下文超限 | 仅 429、5xx |
+| 2002 | `CLIENT_RESPONSE_INVALID`<br>`ClientException` | 2xx 但 SSE 语法/结构非法、空响应、缺 `finish_reason`、tool_calls 冲突 | 否 |
+| 2003 | `CLIENT_IO_ERROR`<br>`ClientException` | 连接失败、读写超时、连接重置 | 是 |
+| 3001 | `AGENT_TURN_LIMIT`<br>`AgentException` | `maxTurns` 次请求后仍无最终文本 | 否 |
+| 3002 | `AGENT_OUTPUT_TRUNCATED`<br>`AgentException` | `finish_reason=length` | 否 |
+| 3003 | `AGENT_RESPONSE_INVALID`<br>`AgentException` | `finish_reason` 非 `stop`、最终 `content` 空白 | 否 |
+| 3004 | `AGENT_CANCELLED`<br>`AgentException` | 调用 `cancel()`；退避等待被中断 | 否 |
+| 3005 | `AGENT_COMPRESSION_FAILED`<br>`AgentException` | 压缩请求失败、摘要为空、摘要被截断、压缩后缺 usage、重试耗尽 | 否 |
+| 4001 | `TOOL_NOT_FOUND`<br>`ToolException` | 模型调用了未注册的工具 | 否 |
+| 4002 | `TOOL_ARGS_INVALID`<br>`ToolException` | 参数 JSON 非法，或工具自检失败 | 否 |
+| 4003 | `TOOL_EXECUTION_FAILED`<br>`ToolException` | 工具执行抛非 `LumiRoseException` 异常，或文件读写失败 | 否 |
+| 4004 | `TOOL_PATH_INVALID`<br>`ToolException` | 路径越界、绝对路径、目标是目录 | 否 |
+| 4005 | `TOOL_FILE_NOT_FOUND`<br>`ToolException` | 目标文件不存在 | 否 |
+| 4006 | `TOOL_FILE_EXISTS`<br>`ToolException` | 目标已存在且未授权覆盖 | 否 |
+| 4007 | `TOOL_EDIT_NO_MATCH`<br>`ToolException` | `edit_file` 的 `old_string` 未匹配 | 否 |
+| 4008 | `TOOL_EDIT_NOT_UNIQUE`<br>`ToolException` | `edit_file` 的 `old_string` 匹配多处 | 否 |
+| 5001 | `STORAGE_FAILED`<br>`StorageException` | 仓储读写失败、DO/entity 转换失败 | 否 |
+| 9001 | `INTERNAL_ERROR`<br>`LumiRoseException` | 未归类的内部错误 | 否 |
+
+</div>
 
 ## HTTP 状态映射
 
