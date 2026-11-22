@@ -1,13 +1,13 @@
 /* ==========================================================================
    LumiRose docs theme
 
-   Direction: a developer's desk in spring — pale rose paper, ink text,
-   one cut rose. Chrome stays quiet; the code samples carry the color.
+   Direction: a florist's workbench in spring — white paper, pale petals,
+   ink text. Chrome stays quiet; the code page is the pressed-flower moment.
    ========================================================================== */
 
 :root {
-  --lr-accent: #b3184f;
-  --lr-accent-hover: #8c0f3c;
+  --lr-accent: #e0447c;
+  --lr-accent-hover: #a5154a;
   --lr-sky: #2e7ea8;
 }
 
@@ -16,59 +16,75 @@
    -------------------------------------------------------------------------- */
 
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color: #b3184f;
-  --md-primary-fg-color--light: #d34d7c;
-  --md-primary-fg-color--dark: #8c0f3c;
+  --md-primary-fg-color: #d02f66;
+  --md-primary-fg-color--light: #e0447c;
+  --md-primary-fg-color--dark: #a5154a;
   --md-primary-bg-color: #ffffff;
 
-  --md-accent-fg-color: #b3184f;
-  --md-accent-fg-color--transparent: rgb(179 24 79 / 10%);
+  --md-accent-fg-color: #d02f66;
+  --md-accent-fg-color--transparent: rgb(224 68 124 / 12%);
 
-  --md-default-fg-color: #241f26;
-  --md-default-fg-color--light: #5e5665;
-  --md-default-fg-color--lighter: #7a7080;
-  --md-default-fg-color--lightest: #eee9ee;
-  --md-default-bg-color: #fcfafb;
+  --md-default-fg-color: #241d26;
+  --md-default-fg-color--light: #5f5567;
+  --md-default-fg-color--lighter: #7c7082;
+  --md-default-fg-color--lightest: #efeaf1;
+  --md-default-bg-color: #fdfbfd;
 
-  --md-typeset-color: #3b3441;
-  --md-typeset-a-color: #a5154a;
+  --md-typeset-color: #3b3340;
+  --md-typeset-a-color: #d02f66;
 
-  --md-code-bg-color: #221c25;
-  --md-code-fg-color: #f5eef2;
+  --md-code-bg-color: #f7f2fd;
+  --md-code-fg-color: #2b2231;
 
-  --md-footer-bg-color: #faf6f8;
-  --md-footer-fg-color: #5e5665;
-  --md-footer-fg-color--light: #7a7080;
-  --md-footer-fg-color--lighter: #a89eaa;
-  --md-footer-bg-color--dark: #f5eff3;
+  --md-footer-bg-color: #fbf8fb;
+  --md-footer-fg-color: #5f5567;
+  --md-footer-fg-color--light: #7c7082;
+  --md-footer-fg-color--lighter: #aa9fb0;
+  --md-footer-bg-color--dark: #f7f2f8;
 
-  --lr-inline-bg: #f6f0f3;
-  --lr-inline-fg: #991144;
-  --lr-canvas: #fcfafb;
-  --lr-header-bg: #fff7fa;
+  --lr-inline-bg: #fcebf2;
+  --lr-inline-fg: #a5154a;
+  --lr-canvas: #fdfbfd;
+  --lr-header-bg: #fff8fb;
   --lr-surface: #ffffff;
-  --lr-soft: #f7f1f4;
-  --lr-ink: #241f26;
-  --lr-body: #3b3441;
-  --lr-secondary: #5e5665;
-  --lr-muted: #7a7080;
-  --lr-hairline: rgb(36 31 38 / 10%);
-  --lr-hairline-strong: rgb(36 31 38 / 16%);
-  --lr-hover: rgb(36 31 38 / 4%);
-  --lr-zebra: rgb(36 31 38 / 2%);
-  --lr-link-underline: rgb(179 24 79 / 30%);
-  --lr-pop-shadow: 0 8px 24px rgb(36 31 38 / 8%);
-  --lr-accent: #b3184f;
-  --lr-accent-ink: #a5154a;
-  --lr-accent-hover: #8c0f3c;
-  --lr-accent-soft: #fbe9f0;
+  --lr-soft: #f8f2f7;
+  --lr-ink: #241d26;
+  --lr-body: #3b3340;
+  --lr-secondary: #5f5567;
+  --lr-muted: #7c7082;
+  --lr-hairline: rgb(48 32 44 / 9%);
+  --lr-hairline-strong: rgb(48 32 44 / 15%);
+  --lr-hover: rgb(48 32 44 / 4%);
+  --lr-zebra: rgb(48 32 44 / 2%);
+  --lr-link-underline: rgb(208 47 102 / 30%);
+  --lr-pop-shadow: 0 8px 24px rgb(48 32 44 / 8%);
+  --lr-accent: #e0447c;
+  --lr-accent-ink: #d02f66;
+  --lr-accent-strong: #c2185b;
+  --lr-accent-hover: #a5154a;
+  --lr-accent-soft: #fde8f0;
+  --lr-petal-pink: #fde8f0;
+  --lr-petal-sky: #e6f3fc;
+  --lr-petal-lilac: #f0eafc;
+  --lr-petal-butter: #fff6de;
   --lr-sky: #2e7ea8;
-  --lr-sky-soft: #eaf5fa;
-  --lr-code-bg: #221c25;
-  --lr-code-fg: #f5eef2;
-  --lr-code-border: rgb(255 255 255 / 8%);
-  --lr-code-muted: #948a99;
-  --lr-shadow: 0 1px 2px rgb(36 31 38 / 5%);
+  --lr-sky-soft: #e6f3fc;
+  --lr-lilac: #6b4fbb;
+  --lr-lilac-soft: #f0eafc;
+  --lr-butter: #8a6a00;
+  --lr-butter-soft: #fff6de;
+  --lr-code-bg: #f7f2fd;
+  --lr-code-fg: #2b2231;
+  --lr-code-border: rgb(80 56 96 / 14%);
+  --lr-code-muted: #73667e;
+  --lr-token-keyword: #b32455;
+  --lr-token-string: #1f6f8b;
+  --lr-token-number: #8a6a00;
+  --lr-token-annotation: #6b4fbb;
+  --lr-token-name: #a33a63;
+  --lr-token-comment: #73667e;
+  --lr-token-punct: #665b6f;
+  --lr-shadow: 0 1px 2px rgb(48 32 44 / 5%);
 }
 
 /* --------------------------------------------------------------------------
@@ -76,13 +92,13 @@
    -------------------------------------------------------------------------- */
 
 [data-md-color-scheme="slate"] {
-  --md-primary-fg-color: #ff9bc1;
-  --md-primary-fg-color--light: #ffb7d2;
+  --md-primary-fg-color: #ffa8c8;
+  --md-primary-fg-color--light: #ffc0d8;
   --md-primary-fg-color--dark: #e06a99;
   --md-primary-bg-color: #171319;
 
-  --md-accent-fg-color: #ff9bc1;
-  --md-accent-fg-color--transparent: rgb(255 155 193 / 12%);
+  --md-accent-fg-color: #ffa8c8;
+  --md-accent-fg-color--transparent: rgb(255 168 200 / 14%);
 
   --md-default-fg-color: #f6eef2;
   --md-default-fg-color--light: #c4b6bf;
@@ -91,7 +107,7 @@
   --md-default-bg-color: #171319;
 
   --md-typeset-color: #e4d9df;
-  --md-typeset-a-color: #ff9bc1;
+  --md-typeset-a-color: #ffa8c8;
 
   --md-code-bg-color: #1e1821;
   --md-code-fg-color: #f5eef2;
@@ -103,7 +119,7 @@
   --md-footer-bg-color--dark: #151117;
 
   --lr-inline-bg: #2a232c;
-  --lr-inline-fg: #ffb7d2;
+  --lr-inline-fg: #ffc0d8;
   --lr-canvas: #171319;
   --lr-header-bg: #1d1720;
   --lr-surface: #201a22;
@@ -116,18 +132,34 @@
   --lr-hairline-strong: rgb(246 238 242 / 16%);
   --lr-hover: rgb(246 238 242 / 6%);
   --lr-zebra: rgb(246 238 242 / 3%);
-  --lr-link-underline: rgb(255 155 193 / 35%);
+  --lr-link-underline: rgb(255 168 200 / 35%);
   --lr-pop-shadow: 0 8px 24px rgb(0 0 0 / 35%);
-  --lr-accent: #ff9bc1;
-  --lr-accent-ink: #ffb7d2;
-  --lr-accent-hover: #ffd0e1;
-  --lr-accent-soft: rgb(255 155 193 / 12%);
+  --lr-accent: #ffa8c8;
+  --lr-accent-ink: #ffc0d8;
+  --lr-accent-strong: #ffc0d8;
+  --lr-accent-hover: #ffd6e5;
+  --lr-accent-soft: rgb(255 168 200 / 14%);
+  --lr-petal-pink: rgb(255 168 200 / 14%);
+  --lr-petal-sky: rgb(159 211 238 / 12%);
+  --lr-petal-lilac: rgb(203 182 242 / 14%);
+  --lr-petal-butter: rgb(255 227 163 / 12%);
   --lr-sky: #8fcbe8;
   --lr-sky-soft: rgb(143 203 232 / 10%);
+  --lr-lilac: #cbb6f2;
+  --lr-lilac-soft: rgb(203 182 242 / 10%);
+  --lr-butter: #ffe3a3;
+  --lr-butter-soft: rgb(255 227 163 / 10%);
   --lr-code-bg: #1e1821;
   --lr-code-fg: #f5eef2;
   --lr-code-border: rgb(255 255 255 / 7%);
   --lr-code-muted: #8d8290;
+  --lr-token-keyword: #ff9ec4;
+  --lr-token-string: #9fd3ee;
+  --lr-token-number: #ffe3a3;
+  --lr-token-annotation: #cbb6f2;
+  --lr-token-name: #ffd3e2;
+  --lr-token-comment: #8d8290;
+  --lr-token-punct: #c9bcc6;
   --lr-shadow: 0 1px 2px rgb(0 0 0 / 30%);
 }
 
@@ -367,13 +399,13 @@ body {
 }
 
 .md-nav--primary > .md-nav__list > .md-nav__item > a.md-nav__link--active {
-  color: var(--lr-accent-ink);
+  color: var(--lr-accent-strong);
   background-color: var(--lr-accent-soft);
   font-weight: 600;
 }
 
 .md-nav--primary > .md-nav__list > .md-nav__item > label.md-nav__link--active {
-  color: var(--lr-accent-ink);
+  color: var(--lr-accent-strong);
   background-color: var(--lr-accent-soft);
   font-weight: 600;
 }
@@ -422,7 +454,7 @@ body {
 }
 
 .md-nav--primary .md-nav__item .md-nav__item > a.md-nav__link.md-nav__link--active {
-  color: var(--lr-accent-ink);
+  color: var(--lr-accent-strong);
   background-color: var(--lr-accent-soft);
   font-weight: 600;
 }
@@ -640,19 +672,19 @@ body {
 
 [dir="ltr"] .md-typeset blockquote {
   padding-left: 1rem;
-  border-left: 2px solid var(--lr-accent);
+  border-left: 2px solid var(--lr-lilac);
 }
 
 [dir="rtl"] .md-typeset blockquote {
   padding-right: 1rem;
-  border-right: 2px solid var(--lr-accent);
+  border-right: 2px solid var(--lr-lilac);
 }
 
 .md-typeset blockquote {
   padding-top: 0.7rem;
   padding-bottom: 0.7rem;
   color: var(--lr-secondary);
-  background: var(--lr-soft);
+  background: var(--lr-petal-lilac);
   border-top: 0;
   border-bottom: 0;
   border-radius: 0 6px 6px 0;
@@ -678,6 +710,8 @@ body {
   font-size: 0.82em;
 }
 
+/* The code page is paper too: pale lilac stock, ink text, four petal inks.
+   On the dark scheme it becomes the same page under a lamp. */
 .md-typeset .highlight {
   overflow: hidden;
   background: var(--lr-code-bg);
@@ -691,7 +725,7 @@ body {
   padding: 1rem 1.25rem;
   background: transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 18%) transparent;
+  scrollbar-color: rgb(80 56 96 / 20%) transparent;
 }
 
 .md-typeset .highlight pre > code {
@@ -708,50 +742,70 @@ body {
 }
 
 .md-typeset .highlight .md-code__button {
-  color: rgb(255 255 255 / 45%);
+  color: var(--lr-code-muted);
   border-radius: 4px;
   transition: color 150ms ease, background-color 150ms ease;
 }
 
 .md-typeset .highlight .md-code__button:hover {
+  color: var(--lr-ink);
+  background-color: rgb(80 56 96 / 7%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight pre {
+  scrollbar-color: rgb(255 255 255 / 18%) transparent;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .md-code__button:hover {
   color: rgb(255 255 255 / 85%);
   background-color: rgb(255 255 255 / 8%);
 }
 
-/* Java tokens: rose for keywords, sky for strings, lilac for numbers. */
+/* Java tokens: rose keywords, sky strings, butter numbers, lilac annotations. */
 .md-typeset .highlight .k,
 .md-typeset .highlight .kd,
 .md-typeset .highlight .kn,
-.md-typeset .highlight .kt {
-  color: #ff9ec4;
+.md-typeset .highlight .kt,
+.md-typeset .highlight .kc {
+  color: var(--lr-token-keyword);
 }
 
 .md-typeset .highlight .s,
 .md-typeset .highlight .s1,
 .md-typeset .highlight .s2,
 .md-typeset .highlight .sd {
-  color: #9fd3ee;
+  color: var(--lr-token-string);
 }
 
 .md-typeset .highlight .mi,
-.md-typeset .highlight .mf {
-  color: #cbb6f2;
+.md-typeset .highlight .mf,
+.md-typeset .highlight .m {
+  color: var(--lr-token-number);
+}
+
+.md-typeset .highlight .nd {
+  color: var(--lr-token-annotation);
 }
 
 .md-typeset .highlight .na,
-.md-typeset .highlight .nf {
-  color: #ffd3e2;
+.md-typeset .highlight .nf,
+.md-typeset .highlight .no {
+  color: var(--lr-token-name);
+}
+
+.md-typeset .highlight .nn {
+  color: var(--lr-token-punct);
 }
 
 .md-typeset .highlight .c,
 .md-typeset .highlight .c1,
 .md-typeset .highlight .cm {
-  color: var(--lr-code-muted);
+  color: var(--lr-token-comment);
 }
 
 .md-typeset .highlight .o,
 .md-typeset .highlight .p {
-  color: #c9bcc6;
+  color: var(--lr-token-punct);
 }
 
 /* --------------------------------------------------------------------------
@@ -896,12 +950,12 @@ body {
 .md-typeset .admonition.warning,
 .md-typeset details.warning {
   border-color: var(--lr-hairline);
-  border-left-color: #b26a00;
+  border-left-color: var(--lr-butter);
 }
 
 .md-typeset .admonition.note > .admonition-title::before,
 .md-typeset .admonition.info > .admonition-title::before {
-  background-color: var(--lr-accent);
+  background-color: var(--lr-accent-strong);
 }
 
 .md-typeset .admonition.tip > .admonition-title::before {
@@ -909,16 +963,24 @@ body {
 }
 
 .md-typeset .admonition.warning > .admonition-title::before {
-  background-color: #b26a00;
+  background-color: var(--lr-butter);
 }
 
 .md-typeset .admonition.note > .admonition-title,
 .md-typeset details.note > summary,
 .md-typeset .admonition.info > .admonition-title,
-.md-typeset details.info > summary,
+.md-typeset details.info > summary {
+  background: var(--lr-petal-pink);
+}
+
 .md-typeset .admonition.tip > .admonition-title,
 .md-typeset details.tip > summary {
-  background: transparent;
+  background: var(--lr-petal-sky);
+}
+
+.md-typeset .admonition.warning > .admonition-title,
+.md-typeset details.warning > summary {
+  background: var(--lr-petal-butter);
 }
 
 /* --------------------------------------------------------------------------
@@ -981,7 +1043,8 @@ body {
     font-size: 1rem;
   }
 
+  /* Keep the copy button above the first line instead of on top of it. */
   .md-typeset .highlight pre {
-    padding: 0.85rem 1rem;
+    padding: 2rem 1rem 0.85rem;
   }
 }
