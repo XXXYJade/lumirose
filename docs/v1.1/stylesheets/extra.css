@@ -261,9 +261,18 @@ body {
 }
 
 .md-nav--primary .md-nav__title[for="__drawer"] {
+  padding-right: 0.8rem;
+  padding-left: 1.82rem;
   color: var(--lr-nav-title);
   background: transparent;
   border-bottom: 1px solid var(--lr-border);
+  box-shadow: none;
+}
+
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__title[for="__drawer"] {
+    padding-left: 1.22rem;
+  }
 }
 
 .md-nav--primary .md-nav__title[for="__drawer"] .md-nav__button {
