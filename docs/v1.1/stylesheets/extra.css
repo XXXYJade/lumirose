@@ -1,0 +1,510 @@
+/* ==========================================================================
+   LumiRose docs theme
+   Light palette: sakura pink + powder blue.
+   The navigation uses separate colors for section labels and child links so
+   hierarchy is visible without relying on weight alone.
+   ========================================================================== */
+
+:root {
+  --lr-rose-100: #fdeaf2;
+  --lr-rose-300: #efaec7;
+  --lr-rose-400: #df83a8;
+  --lr-rose-500: #c45f89;
+  --lr-blue-100: #eaf6fd;
+  --lr-blue-300: #a9d3ea;
+  --lr-blue-400: #8fc4e2;
+}
+
+/* --------------------------------------------------------------------------
+   Light scheme
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: #e7a6bf;
+  --md-primary-fg-color--light: #f4c9da;
+  --md-primary-fg-color--dark: #c97d9d;
+  --md-primary-bg-color: #573747;
+
+  --md-accent-fg-color: #3d87b2;
+  --md-accent-fg-color--transparent: rgb(61 135 178 / 12%);
+
+  --md-default-fg-color: #3f3540;
+  --md-default-fg-color--light: #6f5f6a;
+  --md-default-fg-color--lighter: #a995a1;
+  --md-default-fg-color--lightest: #f1e2e9;
+  --md-default-bg-color: #fffafc;
+
+  --md-typeset-a-color: #b04f74;
+  --md-typeset-color: #3f3540;
+
+  --md-code-bg-color: #fbf1f6;
+  --md-code-fg-color: #4a3a45;
+
+  --md-footer-bg-color: #f8eaf1;
+  --md-footer-fg-color: #5d4a56;
+  --md-footer-fg-color--light: #806c78;
+  --md-footer-fg-color--lighter: #a995a1;
+  --md-footer-bg-color--dark: #f2e0e9;
+
+  --lr-nav-section: #9c3f63;
+  --lr-nav-link: #5d687d;
+  --lr-nav-link-hover: #2a7399;
+  --lr-nav-link-hover-bg: #eef7fd;
+  --lr-nav-active: #a33f64;
+  --lr-nav-active-bg: #fdeaf2;
+
+  --lr-toc-title: #9c3f63;
+  --lr-toc-link: #606c80;
+  --lr-toc-active-bg: #fff4f8;
+
+  --lr-border: rgb(190 120 148 / 18%);
+  --lr-heading: #7f2f4e;
+  --lr-heading-2: #9c3f63;
+  --lr-heading-3: #2f6f91;
+
+  --lr-page-glow-1: rgb(255 214 230 / 55%);
+  --lr-page-glow-2: rgb(208 234 249 / 60%);
+}
+
+/* --------------------------------------------------------------------------
+   Dark scheme: keep the same rose/blue identity on a plum night background.
+   -------------------------------------------------------------------------- */
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #3a2732;
+  --md-primary-fg-color--light: #523746;
+  --md-primary-fg-color--dark: #2a1b23;
+  --md-primary-bg-color: #f4d9e5;
+
+  --md-accent-fg-color: #9fd0ec;
+  --md-accent-fg-color--transparent: rgb(159 208 236 / 12%);
+
+  --md-default-fg-color: #f2e4ec;
+  --md-default-fg-color--light: #cbb3c1;
+  --md-default-fg-color--lighter: #927a88;
+  --md-default-fg-color--lightest: #3a2a34;
+  --md-default-bg-color: #21181e;
+
+  --md-typeset-a-color: #f0a6c2;
+  --md-typeset-color: #f2e4ec;
+
+  --md-code-bg-color: #2b1f27;
+  --md-code-fg-color: #f4dce7;
+
+  --md-footer-bg-color: #1b1318;
+  --md-footer-fg-color: #d9c2cf;
+  --md-footer-fg-color--light: #b9a0ae;
+  --md-footer-fg-color--lighter: #8d7482;
+  --md-footer-bg-color--dark: #150f13;
+
+  --lr-nav-section: #f0a6c2;
+  --lr-nav-link: #c6b3bf;
+  --lr-nav-link-hover: #9fd0ec;
+  --lr-nav-link-hover-bg: rgb(159 208 236 / 10%);
+  --lr-nav-active: #f4b7ce;
+  --lr-nav-active-bg: rgb(240 166 194 / 12%);
+
+  --lr-toc-title: #f0a6c2;
+  --lr-toc-link: #bda9b5;
+  --lr-toc-active-bg: rgb(240 166 194 / 10%);
+
+  --lr-border: rgb(240 166 194 / 18%);
+  --lr-heading: #f4c2d5;
+  --lr-heading-2: #f0a6c2;
+  --lr-heading-3: #a8d6ee;
+
+  --lr-page-glow-1: rgb(122 61 84 / 20%);
+  --lr-page-glow-2: rgb(56 106 134 / 18%);
+}
+
+/* --------------------------------------------------------------------------
+   Page canvas
+   -------------------------------------------------------------------------- */
+
+body {
+  background-color: var(--md-default-bg-color);
+  background-image:
+    radial-gradient(60rem 36rem at 8% -4%, var(--lr-page-glow-1), transparent 62%),
+    radial-gradient(52rem 32rem at 96% 2%, var(--lr-page-glow-2), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+::selection {
+  color: #4a2b3a;
+  background: #f7c9dc;
+}
+
+/* --------------------------------------------------------------------------
+   Header and search
+   -------------------------------------------------------------------------- */
+
+.md-header {
+  color: #573747;
+  background: linear-gradient(115deg, #f9dce8 0%, #f6e6f1 46%, #dceefa 100%);
+  border-bottom: 1px solid rgb(190 120 148 / 14%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 55%) inset, 0 6px 24px rgb(126 73 96 / 6%);
+}
+
+.md-header__title,
+.md-header__topic,
+.md-header__button {
+  color: inherit;
+}
+
+.md-header .md-search__form {
+  background-color: rgb(255 255 255 / 62%);
+  border: 1px solid rgb(255 255 255 / 76%);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgb(126 73 96 / 7%);
+}
+
+.md-header .md-search__form:hover {
+  background-color: rgb(255 255 255 / 82%);
+}
+
+.md-header .md-search__input {
+  color: #4a3a45;
+}
+
+[data-md-color-scheme="slate"] .md-header {
+  color: #f4d9e5;
+  background: linear-gradient(115deg, #34222c 0%, #2b222d 50%, #1e2a32 100%);
+  border-bottom-color: rgb(240 166 194 / 14%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 5%) inset, 0 6px 24px rgb(0 0 0 / 24%);
+}
+
+[data-md-color-scheme="slate"] .md-header .md-search__form {
+  background-color: rgb(255 255 255 / 8%);
+  border-color: rgb(240 166 194 / 16%);
+}
+
+[data-md-color-scheme="slate"] .md-header .md-search__form:hover {
+  background-color: rgb(255 255 255 / 12%);
+}
+
+[data-md-color-scheme="slate"] .md-header .md-search__input {
+  color: #f2e4ec;
+}
+
+/* --------------------------------------------------------------------------
+   Left navigation
+   -------------------------------------------------------------------------- */
+
+.md-sidebar__scrollwrap {
+  scrollbar-color: var(--lr-rose-300) transparent;
+}
+
+.md-nav--primary .md-nav__title[for="__drawer"] {
+  color: #7f2f4e;
+  background: transparent;
+  border-bottom: 1px solid var(--lr-border);
+}
+
+.md-nav--primary .md-nav__title[for="__drawer"] .md-nav__button {
+  color: var(--lr-rose-500);
+}
+
+.md-nav__source {
+  color: #6f3a50;
+  background: linear-gradient(115deg, #fbe3ec 0%, #f3e8f5 50%, #e6f2fa 100%);
+  border-bottom: 1px solid var(--lr-border);
+}
+
+.md-nav__source .md-source {
+  color: inherit;
+}
+
+[data-md-color-scheme="slate"] .md-nav__source {
+  color: #f4d9e5;
+  background: linear-gradient(115deg, #34222c 0%, #2b222d 50%, #1e2a32 100%);
+}
+
+/* Direct top-level pages (for example "需求" and "测试") sit between the
+   section labels and the child links in the hierarchy. */
+.md-nav--primary > .md-nav__list > .md-nav__item:not(.md-nav__item--section) > .md-nav__link {
+  color: #4f5a6e;
+  font-weight: 600;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item:not(.md-nav__item--section) > .md-nav__link--active {
+  color: var(--lr-nav-active);
+}
+
+.md-nav--primary .md-nav__item--section {
+  margin-top: 1.35em;
+}
+
+.md-nav--primary .md-nav__item--section > .md-nav__link {
+  margin-bottom: 0.15rem;
+}
+
+.md-nav--primary .md-nav__link {
+  color: var(--lr-nav-link);
+  border-radius: 0.45rem;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.md-nav--primary .md-nav__link[href]:hover,
+.md-nav--primary .md-nav__link[for]:hover {
+  color: var(--lr-nav-link-hover);
+  background-color: var(--lr-nav-link-hover-bg);
+}
+
+.md-nav--primary .md-nav__link--active,
+.md-nav--primary .md-nav__item--active:not(.md-nav__item--section) > .md-nav__link {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-nav-active-bg);
+  font-weight: 600;
+}
+
+.md-nav--primary .md-nav__link--active:hover,
+.md-nav--primary .md-nav__item--active:not(.md-nav__item--section) > .md-nav__link:hover {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-nav-active-bg);
+}
+
+/* Section labels are the top-level group names. Give them a rose tone and a
+   small rose-to-blue marker; child links stay muted slate blue. */
+.md-nav--primary .md-nav__item--section > .md-nav__link {
+  color: var(--lr-nav-section);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+.md-nav--primary .md-nav__item--section > .md-nav__link .md-ellipsis {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.md-nav--primary .md-nav__item--section > .md-nav__link .md-ellipsis::before {
+  width: 0.22rem;
+  height: 0.82rem;
+  content: "";
+  background: linear-gradient(180deg, var(--lr-rose-300), var(--lr-blue-400));
+  border-radius: 99px;
+}
+
+.md-nav--primary .md-nav__item--section > .md-nav__link[for]:hover {
+  color: var(--lr-nav-section);
+  background-color: transparent;
+}
+
+[data-md-color-scheme="slate"] .md-nav--primary .md-nav__title[for="__drawer"] {
+  color: #f4c2d5;
+  background: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Right-hand table of contents
+   -------------------------------------------------------------------------- */
+
+.md-nav--secondary .md-nav__title {
+  padding-bottom: 0.35rem;
+  color: var(--lr-toc-title);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: transparent;
+  border-bottom: 1px solid var(--lr-border);
+  box-shadow: none;
+}
+
+.md-nav--secondary .md-nav__title::after {
+  display: block;
+  width: 2rem;
+  height: 2px;
+  margin-top: 0.35rem;
+  content: "";
+  background: linear-gradient(90deg, var(--lr-rose-300), var(--lr-blue-300));
+  border-radius: 99px;
+}
+
+.md-nav--secondary .md-nav__link {
+  color: var(--lr-toc-link);
+  border-radius: 0.35rem;
+  transition: color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.md-nav--secondary .md-nav__link:hover {
+  color: var(--lr-nav-link-hover);
+  background-color: var(--lr-nav-link-hover-bg);
+  box-shadow: inset 2px 0 0 var(--lr-blue-300);
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-toc-active-bg);
+  box-shadow: inset 2px 0 0 var(--lr-rose-400);
+  font-weight: 600;
+}
+
+.md-nav--secondary .md-nav__link--active:hover {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-toc-active-bg);
+  box-shadow: inset 2px 0 0 var(--lr-rose-400);
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+
+.md-typeset h1 {
+  color: var(--lr-heading);
+  font-weight: 600;
+}
+
+.md-typeset h2 {
+  padding-bottom: 0.24em;
+  color: var(--lr-heading-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--lr-border);
+}
+
+.md-typeset h3 {
+  color: var(--lr-heading-3);
+  font-weight: 600;
+}
+
+.md-typeset a {
+  text-underline-offset: 0.15em;
+  text-decoration-color: rgb(176 79 116 / 30%);
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color);
+  text-decoration-color: currentcolor;
+}
+
+.md-typeset blockquote {
+  padding: 0.2rem 0.9rem;
+  color: #6b5562;
+  background: linear-gradient(90deg, rgb(253 234 242 / 65%), transparent);
+  border-left: 0.2rem solid var(--lr-rose-300);
+  border-radius: 0 0.4rem 0.4rem 0;
+}
+
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+  color: #d6becb;
+  background: linear-gradient(90deg, rgb(240 166 194 / 8%), transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Tables, code and admonitions
+   -------------------------------------------------------------------------- */
+
+.md-typeset table:not([class]) {
+  overflow: hidden;
+  border-color: var(--lr-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgb(126 73 96 / 4%);
+}
+
+.md-typeset table:not([class]) th {
+  color: #6f3550;
+  background: linear-gradient(115deg, #fbe8f1, #eaf5fc);
+}
+
+.md-typeset table:not([class]) tbody tr:nth-child(2n) {
+  background-color: rgb(255 247 251 / 65%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  color: #f4c2d5;
+  background: linear-gradient(115deg, rgb(122 61 84 / 35%), rgb(56 106 134 / 30%));
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tbody tr:nth-child(2n) {
+  background-color: rgb(240 166 194 / 4%);
+}
+
+.md-typeset .highlight {
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.md-typeset code {
+  color: #8a3a5b;
+}
+
+.md-typeset pre > code {
+  color: var(--md-code-fg-color);
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  color: #f0b4cb;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 14px rgb(126 73 96 / 5%);
+}
+
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: #e7a8c2;
+}
+
+.md-typeset .admonition.note > .admonition-title,
+.md-typeset details.note > summary {
+  background-color: var(--lr-rose-100);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.note,
+[data-md-color-scheme="slate"] .md-typeset details.note {
+  border-color: rgb(240 166 194 / 34%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.note > .admonition-title,
+[data-md-color-scheme="slate"] .md-typeset details.note > summary {
+  background-color: rgb(240 166 194 / 15%);
+}
+
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: #a9d3ea;
+}
+
+.md-typeset .admonition.tip > .admonition-title,
+.md-typeset details.tip > summary {
+  background-color: var(--lr-blue-100);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.tip,
+[data-md-color-scheme="slate"] .md-typeset details.tip {
+  border-color: rgb(159 208 236 / 34%);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition.tip > .admonition-title,
+[data-md-color-scheme="slate"] .md-typeset details.tip > summary {
+  background-color: rgb(159 208 236 / 14%);
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.md-footer {
+  color: var(--md-footer-fg-color);
+  background: linear-gradient(115deg, #f9e2ec 0%, #f4e9f2 50%, #e6f2fa 100%);
+  border-top: 1px solid var(--lr-border);
+}
+
+.md-footer-meta {
+  background-color: transparent;
+}
+
+.md-footer-meta.md-typeset a {
+  color: #7f4a60;
+}
+
+[data-md-color-scheme="slate"] .md-footer {
+  background: linear-gradient(115deg, #261a21 0%, #221a20 50%, #18232a 100%);
+}
+
+/* Keep the footer readable when Material renders its default dark meta bar. */
+[data-md-color-scheme="slate"] .md-footer-meta.md-typeset a {
+  color: #d9b7c7;
+}

@@ -35,6 +35,9 @@ theme:
         icon: material/weather-sunny
         name: 切换到浅色
 
+extra_css:
+  - stylesheets/extra.css
+
 plugins:
   - search
 
