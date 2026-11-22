@@ -74,15 +74,15 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 | [关键设计决策](docs/v1.1/design-decisions.md) | 为什么这样取舍 |
 | [API 参考](docs/v1.1/reference/api.md) | 公开类型与方法 |
 | [错误码](docs/v1.1/reference/error-codes.md) | 错误语义与处理建议 |
-| [v1.1 需求](docs/v1.1/requirements/v1.1.md) | 当前唯一完整规格 |
-| [v1.1 测试计划](docs/v1.1/testing/v1.1.md) | 验收项到用例的映射 |
 | [v1 文档（冻结）](https://xxxyjade.github.io/lumirose/v1/) | 同步、非流式、DTO 仓储的旧版 |
+
+需求规格与测试计划保留在仓库中，作为工程记录，不进入公开文档站。
 
 ## 状态
 
 当前仓库处于 **v1.1 迁移期**：`docs/` 描述 v1.1 目标规格，代码正在从旧实现迁移到该规格。文档先于代码，是为了让 API、失败语义和持久化边界在实现前可审查。
 
-v1.1 明确不做：多 provider、多 Agent、RAG、多模态、Web UI、独立服务端、内置 JDBC/Redis、进程内会话锁、遥测 SPI、结构化输出。完整边界见 [v1.1 需求](docs/v1.1/requirements/v1.1.md)。
+v1.1 明确不做：多 provider、多 Agent、RAG、多模态、Web UI、独立服务端、内置 JDBC/Redis、进程内会话锁、遥测 SPI、结构化输出。
 
 ## 构建
 

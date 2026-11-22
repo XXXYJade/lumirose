@@ -55,7 +55,8 @@ markdown_extensions:
   - pymdownx.superfences
 
 exclude_docs: |
-  requirements/archive/
+  requirements/
+  testing/
 
 nav:
   - 首页: index.md
@@ -73,5 +74,3 @@ nav:
   - 参考:
       - API: reference/api.md
       - 错误码: reference/error-codes.md
-  - 需求: requirements/v1.1.md
-  - 测试: testing/v1.1.md

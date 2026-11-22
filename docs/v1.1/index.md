@@ -69,8 +69,8 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 - [关键设计决策](design-decisions.md)
 - [错误码](reference/error-codes.md)
 - [API 参考](reference/api.md)
-- [v1.1 需求](requirements/v1.1.md)
-- [v1.1 测试计划](testing/v1.1.md)
+
+公开文档只覆盖接入、实现和公开契约；需求规格与测试计划保留在仓库中，作为工程记录，不进入站点导航。
 
 ## 非目标
 

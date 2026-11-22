@@ -1,108 +1,97 @@
 /* ==========================================================================
    LumiRose docs theme
-   Warm sakura / peach / powder-blue palette with a clean CJK sans stack.
+   Bright sakura / lavender / powder-blue palette with a clean CJK sans stack.
    ========================================================================== */
 
 :root {
-  --lr-rose-100: #ffe3ec;
-  --lr-rose-200: #ffc9da;
-  --lr-rose-300: #ff9fbe;
-  --lr-rose-400: #ff7fa8;
-  --lr-rose-500: #ef5f8e;
-  --lr-rose-600: #d7265f;
-  --lr-rose-700: #b0174a;
-
-  --lr-peach-100: #fff0e6;
-  --lr-peach-200: #ffdcc6;
-  --lr-peach-400: #ffb38a;
-
-  --lr-blue-100: #e8f6ff;
-  --lr-blue-300: #b9e2fb;
-  --lr-blue-400: #7fc8ef;
+  --lr-rose-300: #ff9fca;
+  --lr-rose-400: #ff6fb5;
+  --lr-rose-500: #f24d9d;
+  --lr-blue-300: #9fdcff;
+  --lr-blue-400: #6cc7f5;
 }
 
 /* --------------------------------------------------------------------------
-   Light scheme: warm cream canvas, vivid rose, peach and a blue highlight.
+   Light scheme: cool pink-white canvas, vivid rose, lavender and sky blue.
    -------------------------------------------------------------------------- */
 
 [data-md-color-scheme="default"] {
-  --md-primary-fg-color: #ff9fbe;
-  --md-primary-fg-color--light: #ffc9da;
-  --md-primary-fg-color--dark: #e85d8a;
-  --md-primary-bg-color: #4a2332;
+  --md-primary-fg-color: #ff9fca;
+  --md-primary-fg-color--light: #ffc9e2;
+  --md-primary-fg-color--dark: #f25c9f;
+  --md-primary-bg-color: #431b34;
 
-  --md-accent-fg-color: #e85d75;
-  --md-accent-fg-color--transparent: rgb(232 93 117 / 12%);
+  --md-accent-fg-color: #2f86c9;
+  --md-accent-fg-color--transparent: rgb(47 134 201 / 12%);
 
-  --md-default-fg-color: #3d2b32;
-  --md-default-fg-color--light: #6f525b;
-  --md-default-fg-color--lighter: #b08d97;
-  --md-default-fg-color--lightest: #f7e3e8;
-  --md-default-bg-color: #fff8f3;
+  --md-default-fg-color: #352b3a;
+  --md-default-fg-color--light: #665a70;
+  --md-default-fg-color--lighter: #a998b4;
+  --md-default-fg-color--lightest: #f3e3ee;
+  --md-default-bg-color: #fff9fd;
 
-  --md-typeset-a-color: #c72c5a;
-  --md-typeset-color: #3d2b32;
+  --md-typeset-a-color: #c72c6a;
+  --md-typeset-color: #352b3a;
 
-  --md-code-bg-color: #fff1ec;
-  --md-code-fg-color: #5a2f3d;
+  --md-code-bg-color: #fdf2fb;
+  --md-code-fg-color: #552f4a;
 
-  --md-footer-bg-color: #ffebe1;
-  --md-footer-fg-color: #5a3a42;
-  --md-footer-fg-color--light: #806069;
-  --md-footer-fg-color--lighter: #b08d97;
-  --md-footer-bg-color--dark: #ffe2ec;
+  --md-footer-bg-color: #ffe6f3;
+  --md-footer-fg-color: #5a3a4c;
+  --md-footer-fg-color--light: #806074;
+  --md-footer-fg-color--lighter: #b08da4;
+  --md-footer-bg-color--dark: #ffe0ef;
 
-  --lr-header-text: #4a2332;
-  --lr-header-1: #ffc9b5;
-  --lr-header-2: #ff9fbe;
-  --lr-header-3: #a9d8ff;
+  --lr-header-text: #431b34;
+  --lr-header-1: #ffc2dd;
+  --lr-header-2: #e4c8ff;
+  --lr-header-3: #b9e8ff;
 
-  --lr-source-text: #6b2f42;
-  --lr-source-1: #ffd9c9;
-  --lr-source-2: #ffd0e2;
-  --lr-source-3: #d6efff;
+  --lr-source-text: #6b2f52;
+  --lr-source-1: #ffe0ef;
+  --lr-source-2: #f0e4ff;
+  --lr-source-3: #dff4ff;
 
-  --lr-footer-1: #ffe3d3;
-  --lr-footer-2: #ffd6e5;
-  --lr-footer-3: #d9f0ff;
+  --lr-footer-1: #ffe6f2;
+  --lr-footer-2: #f2e7ff;
+  --lr-footer-3: #e0f5ff;
 
-  --lr-glow-1: rgb(255 184 208 / 88%);
-  --lr-glow-2: rgb(169 216 255 / 78%);
-  --lr-glow-3: rgb(255 211 173 / 70%);
+  --lr-glow-1: rgb(255 194 221 / 85%);
+  --lr-glow-2: rgb(185 232 255 / 78%);
+  --lr-glow-3: rgb(228 200 255 / 65%);
 
-  --lr-border: rgb(214 96 128 / 24%);
+  --lr-border: rgb(216 27 96 / 20%);
   --lr-nav-title: #a31345;
   --lr-nav-section: #d81b60;
-  --lr-nav-top: #5a3a44;
-  --lr-nav-link: #6b4a54;
-  --lr-nav-link-hover: #c22e52;
-  --lr-nav-link-hover-bg: #ffe8ef;
+  --lr-nav-link: #5d6078;
+  --lr-nav-link-hover: #1b73ae;
+  --lr-nav-link-hover-bg: #e3f5ff;
   --lr-nav-active: #b0174a;
-  --lr-nav-active-bg: #ffd0e0;
+  --lr-nav-active-bg: #ffd6e8;
 
   --lr-toc-title: #d81b60;
-  --lr-toc-link: #72525c;
-  --lr-toc-active-bg: #ffd9e6;
+  --lr-toc-link: #665f78;
+  --lr-toc-active-bg: #ffe0ef;
 
   --lr-heading: #a31345;
   --lr-heading-2: #d81b60;
-  --lr-heading-3: #b3542f;
+  --lr-heading-3: #3f6fb5;
 
-  --lr-quote-text: #6b4a54;
-  --lr-quote-bg: rgb(255 211 196 / 75%);
+  --lr-quote-text: #5d5568;
+  --lr-quote-bg: rgb(255 201 226 / 55%);
 
-  --lr-table-head-1: #ffd3bf;
-  --lr-table-head-2: #ffc0d6;
-  --lr-table-head-text: #6b2f42;
-  --lr-table-alt: rgb(255 247 241 / 78%);
+  --lr-table-head-1: #ffd6e8;
+  --lr-table-head-2: #d9efff;
+  --lr-table-head-text: #6b2f52;
+  --lr-table-alt: rgb(255 246 252 / 80%);
 
   --lr-code-inline: #b0174a;
-  --lr-note-bg: #ffd9e5;
-  --lr-tip-bg: #e1f4ff;
+  --lr-note-bg: #ffe0ef;
+  --lr-tip-bg: #dff4ff;
 }
 
 /* --------------------------------------------------------------------------
-   Dark scheme: warm plum night with rose and peach highlights.
+   Dark scheme: plum night with rose and sky-blue highlights.
    -------------------------------------------------------------------------- */
 
 [data-md-color-scheme="slate"] {
@@ -111,8 +100,8 @@
   --md-primary-fg-color--dark: #35202a;
   --md-primary-bg-color: #ffd6e2;
 
-  --md-accent-fg-color: #ffb08a;
-  --md-accent-fg-color--transparent: rgb(255 176 138 / 12%);
+  --md-accent-fg-color: #6cc7f5;
+  --md-accent-fg-color--transparent: rgb(108 199 245 / 12%);
 
   --md-default-fg-color: #ffedf2;
   --md-default-fg-color--light: #e3c2cc;
@@ -120,7 +109,7 @@
   --md-default-fg-color--lightest: #402b35;
   --md-default-bg-color: #23171d;
 
-  --md-typeset-a-color: #ff9fbe;
+  --md-typeset-a-color: #ff9fca;
   --md-typeset-color: #ffedf2;
 
   --md-code-bg-color: #2d1d25;
@@ -148,36 +137,35 @@
 
   --lr-glow-1: rgb(160 60 90 / 25%);
   --lr-glow-2: rgb(60 120 160 / 18%);
-  --lr-glow-3: rgb(160 100 50 / 16%);
+  --lr-glow-3: rgb(120 80 160 / 16%);
 
-  --lr-border: rgb(255 159 190 / 20%);
-  --lr-nav-title: #ffd1dc;
-  --lr-nav-section: #ff9fbe;
-  --lr-nav-top: #e3c2cc;
-  --lr-nav-link: #d6b6c1;
-  --lr-nav-link-hover: #ffc29a;
-  --lr-nav-link-hover-bg: rgb(255 176 138 / 10%);
-  --lr-nav-active: #ffb3c9;
-  --lr-nav-active-bg: rgb(255 127 168 / 15%);
+  --lr-border: rgb(255 159 202 / 20%);
+  --lr-nav-title: #ffd1e0;
+  --lr-nav-section: #ff9fca;
+  --lr-nav-link: #d6b6c4;
+  --lr-nav-link-hover: #9fdcff;
+  --lr-nav-link-hover-bg: rgb(108 199 245 / 10%);
+  --lr-nav-active: #ffb3cf;
+  --lr-nav-active-bg: rgb(255 127 181 / 15%);
 
-  --lr-toc-title: #ff9fbe;
-  --lr-toc-link: #c8a6b1;
-  --lr-toc-active-bg: rgb(255 127 168 / 12%);
+  --lr-toc-title: #ff9fca;
+  --lr-toc-link: #c8a6b4;
+  --lr-toc-active-bg: rgb(255 127 181 / 12%);
 
-  --lr-heading: #ffd1dc;
-  --lr-heading-2: #ff9fbe;
-  --lr-heading-3: #ffc29a;
+  --lr-heading: #ffd1e0;
+  --lr-heading-2: #ff9fca;
+  --lr-heading-3: #9fdcff;
 
-  --lr-quote-text: #e3c2cc;
-  --lr-quote-bg: rgb(255 159 190 / 8%);
+  --lr-quote-text: #e3c2d0;
+  --lr-quote-bg: rgb(255 159 202 / 8%);
 
   --lr-table-head-1: rgb(160 60 90 / 35%);
-  --lr-table-head-2: rgb(160 100 50 / 30%);
-  --lr-table-head-text: #ffd1dc;
-  --lr-table-alt: rgb(255 159 190 / 4%);
+  --lr-table-head-2: rgb(60 120 160 / 30%);
+  --lr-table-head-text: #ffd1e0;
+  --lr-table-alt: rgb(255 159 202 / 4%);
 
-  --lr-code-inline: #ffb3c9;
-  --lr-note-bg: rgb(255 159 190 / 15%);
+  --lr-code-inline: #ffb3cf;
+  --lr-note-bg: rgb(255 159 202 / 15%);
   --lr-tip-bg: rgb(127 200 239 / 14%);
 }
 
@@ -203,7 +191,7 @@ body {
 
 ::selection {
   color: #4a2332;
-  background: #ffc9da;
+  background: #ffc9e2;
 }
 
 /* --------------------------------------------------------------------------
@@ -221,7 +209,7 @@ body {
   border-bottom: 1px solid var(--lr-border);
   box-shadow:
     0 1px 0 rgb(255 255 255 / 50%) inset,
-    0 6px 24px rgb(160 60 90 / 8%);
+    0 6px 24px rgb(190 60 130 / 8%);
 }
 
 .md-header__title,
@@ -234,7 +222,7 @@ body {
   background-color: rgb(255 255 255 / 55%);
   border: 1px solid rgb(255 255 255 / 72%);
   border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgb(160 60 90 / 8%);
+  box-shadow: 0 2px 8px rgb(190 60 130 / 8%);
 }
 
 .md-header .md-search__form:hover {
@@ -297,31 +285,40 @@ body {
   color: inherit;
 }
 
-/* Keep the four navigation levels visually distinct:
-   group title > direct page > child link > current child. */
+/* One rhythm for every top-level row: direct pages and section labels share
+   the same height, type, marker and divider. Child links are quieter. */
 .md-nav--primary .md-nav__item {
   font-size: 0.72rem;
 }
 
-.md-nav--primary .md-nav__item--section {
-  margin-top: 1.35em;
+.md-nav--primary > .md-nav__list > .md-nav__item {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--lr-border);
 }
 
-.md-nav--primary .md-nav__item--section > .md-nav__link {
-  margin-bottom: 0.2rem;
+.md-nav--primary > .md-nav__list > .md-nav__item:first-child {
+  border-top: 0;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.55rem;
   color: var(--lr-nav-section);
   font-size: 0.73rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  border-radius: 0.45rem;
 }
 
-.md-nav--primary .md-nav__item--section > .md-nav__link .md-ellipsis {
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link > .md-ellipsis {
   display: inline-flex;
   gap: 0.45rem;
   align-items: center;
 }
 
-.md-nav--primary .md-nav__item--section > .md-nav__link .md-ellipsis::before {
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link > .md-ellipsis::before {
   width: 0.22rem;
   height: 0.82rem;
   content: "";
@@ -329,9 +326,22 @@ body {
   border-radius: 99px;
 }
 
-.md-nav--primary > .md-nav__list > .md-nav__item:not(.md-nav__item--section) > .md-nav__link {
-  color: var(--lr-nav-top);
-  font-weight: 600;
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link[href]:hover {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-nav-active-bg);
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link--active {
+  color: var(--lr-nav-active);
+  background-color: var(--lr-nav-active-bg);
+}
+
+.md-nav--primary .md-nav__item .md-nav__item > .md-nav__link {
+  padding-top: 0.38rem;
+  padding-bottom: 0.38rem;
+  color: var(--lr-nav-link);
+  font-size: 0.7rem;
+  font-weight: 400;
 }
 
 .md-nav--primary .md-nav__link {
@@ -340,26 +350,29 @@ body {
   transition: color 150ms ease, background-color 150ms ease;
 }
 
-.md-nav--primary .md-nav__link[href]:hover,
-.md-nav--primary .md-nav__link[for]:hover {
+.md-nav--primary .md-nav__item .md-nav__item > .md-nav__link[href]:hover {
   color: var(--lr-nav-link-hover);
   background-color: var(--lr-nav-link-hover-bg);
 }
 
-.md-nav--primary .md-nav__link--active,
-.md-nav--primary .md-nav__item--active:not(.md-nav__item--section) > .md-nav__link {
+.md-nav--primary .md-nav__item .md-nav__item > .md-nav__link.md-nav__link--active,
+.md-nav--primary .md-nav__item .md-nav__item.md-nav__item--active > .md-nav__link {
   color: var(--lr-nav-active);
   background-color: var(--lr-nav-active-bg);
   font-weight: 600;
 }
 
-.md-nav--primary .md-nav__link--active:hover,
-.md-nav--primary .md-nav__item--active:not(.md-nav__item--section) > .md-nav__link:hover {
+.md-nav--primary .md-nav__item .md-nav__item > .md-nav__link.md-nav__link--active:hover,
+.md-nav--primary .md-nav__item .md-nav__item.md-nav__item--active > .md-nav__link:hover {
   color: var(--lr-nav-active);
   background-color: var(--lr-nav-active-bg);
 }
 
-.md-nav--primary .md-nav__item--section > .md-nav__link[for]:hover {
+.md-nav--primary > .md-nav__list > .md-nav__item--section > .md-nav {
+  padding-bottom: 0.35rem;
+}
+
+.md-nav--primary > .md-nav__list > .md-nav__item--section > .md-nav__link[for]:hover {
   color: var(--lr-nav-section);
   background-color: transparent;
 }
@@ -441,7 +454,7 @@ body {
 
 .md-typeset a {
   text-underline-offset: 0.15em;
-  text-decoration-color: rgb(199 44 90 / 30%);
+  text-decoration-color: rgb(199 44 106 / 30%);
 }
 
 .md-typeset a:hover {
@@ -465,7 +478,7 @@ body {
   overflow: hidden;
   border-color: var(--lr-border);
   border-radius: 0.5rem;
-  box-shadow: 0 4px 14px rgb(160 60 90 / 5%);
+  box-shadow: 0 4px 14px rgb(190 60 130 / 5%);
 }
 
 .md-typeset table:not([class]) th {
@@ -494,12 +507,12 @@ body {
 .md-typeset details {
   overflow: hidden;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 14px rgb(160 60 90 / 6%);
+  box-shadow: 0 4px 14px rgb(190 60 130 / 6%);
 }
 
 .md-typeset .admonition.note,
 .md-typeset details.note {
-  border-color: #ff9fbe;
+  border-color: #ff9fca;
 }
 
 .md-typeset .admonition.note > .admonition-title,

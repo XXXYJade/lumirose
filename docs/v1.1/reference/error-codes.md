@@ -102,4 +102,4 @@ LumiRoseException (RuntimeException)
 - `apiKey` 不得出现在异常消息、cause、日志或 `toString()` 中。
 - 异常消息不包含消息内容、工具参数/结果、请求/响应体原文。
 - 2001 只提取 HTTP 状态与厂商 `error` 的 `code`/`type`，不包含厂商 `error.message`。
-- 错误码是公开契约；新增或改码需要同步更新本页与 [v1.1 需求](../requirements/v1.1.md)。
+- 错误码是公开契约；新增或改码需要同步更新本页与相关实现。
