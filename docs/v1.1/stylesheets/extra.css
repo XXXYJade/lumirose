@@ -826,7 +826,7 @@ body {
 /* Material shrinks tables to their content on desktop; give them the full
    measure so four-column contract tables stay readable. Mobile keeps the
    horizontal scroll wrapper. */
-@media screen and (min-width: 60em) {
+@media screen and (min-width: 48em) {
   .md-typeset .md-typeset__table {
     display: block;
   }
@@ -837,7 +837,7 @@ body {
   }
 }
 
-@media screen and (max-width: 59.9375em) {
+@media screen and (max-width: 47.9375em) {
   .md-typeset .md-typeset__table {
     display: block;
     max-width: 100%;
