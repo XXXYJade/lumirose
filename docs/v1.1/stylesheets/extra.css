@@ -339,6 +339,8 @@ body {
 .md-nav--primary .md-nav__item .md-nav__item > .md-nav__link {
   padding-top: 0.38rem;
   padding-bottom: 0.38rem;
+  padding-left: 0.8rem;
+  margin-left: 0.75rem;
   color: var(--lr-nav-link);
   font-size: 0.7rem;
   font-weight: 400;
