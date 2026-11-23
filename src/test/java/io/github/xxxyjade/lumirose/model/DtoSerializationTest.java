@@ -18,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * chat DTO 的 JSON 字段形状测试。
+ */
 class DtoSerializationTest {
 
     private final ObjectMapper mapper = new ObjectMapper();

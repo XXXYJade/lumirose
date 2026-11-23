@@ -11,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 用共享契约测试验证内存实现，并补充会话行创建的内部断言。
+ */
 class InMemoryRepositoryContractTest extends RepositoryContract {
 
     @Override
@@ -61,6 +64,8 @@ class InMemoryRepositoryContractTest extends RepositoryContract {
 
     @SuppressWarnings("unchecked")
     private static Map<Long, ?> rows(InMemoryConversationRepository repository) throws Exception {
+        // 公共 load 无法区分“没有会话行”和“空会话”，这里直接检查内存实现的
+        // 私有存储，只用于验证契约中的“是否建行”，不参与生产逻辑。
         Field field = InMemoryConversationRepository.class.getDeclaredField("conversations");
         field.setAccessible(true);
         return (Map<Long, ?>) field.get(repository);

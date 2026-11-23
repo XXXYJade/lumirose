@@ -21,6 +21,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 仓储 SPI 的共享契约测试。
+ *
+ * <p>实现类继承本类并提供 {@link #newRepository()}；测试只依赖
+ * {@link ConversationRepository} 的公开行为。
+ */
 public abstract class RepositoryContract {
 
     protected abstract ConversationRepository newRepository();
@@ -156,6 +162,8 @@ public abstract class RepositoryContract {
         ConversationRepository repository = newRepository();
         int conversationCount = 4;
         int messagesPerConversation = 25;
+        // 每个会话固定一个线程，验证不同会话可并行且共享仓储没有数据竞争。
+        // 同一会话的并发写不在契约内，由调用方保证单写者。
         ExecutorService pool = Executors.newFixedThreadPool(conversationCount);
         CountDownLatch start = new CountDownLatch(1);
         List<Future<?>> futures = new ArrayList<>();

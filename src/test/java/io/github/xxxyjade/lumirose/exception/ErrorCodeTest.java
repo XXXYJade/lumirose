@@ -35,6 +35,9 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 错误码到异常类型、重试分类和消息安全的测试。
+ */
 class ErrorCodeTest {
 
     @Test

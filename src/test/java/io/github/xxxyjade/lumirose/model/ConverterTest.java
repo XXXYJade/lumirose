@@ -23,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * DO/Entity 转换的字段映射、排序和非法输入测试。
+ */
 class ConverterTest {
 
     private static final Instant NOW = Instant.parse("2026-01-02T03:04:05Z");
