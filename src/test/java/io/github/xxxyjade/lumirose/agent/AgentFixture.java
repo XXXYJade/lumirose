@@ -19,23 +19,24 @@ import java.util.List;
  * Agent 测试的共享装配：假服务、内存仓储、客户端和 SSE 脚本构造器。
  *
  * <p>测试不 mock {@link LumiRoseClient}；它保持 final，通过真实 HTTP 请求
- * 驱动，请求形状由 {@link FakeServer} 记录。
+ * 驱动，请求形状由 {@link FakeServer} 记录。类与成员是 public 是因为
+ * {@code logging} 包的测试也要复用同一套装配。
  */
-final class AgentFixture {
-    static final String API_KEY = "sk-agent-test";
-    static final String MODEL = "test-model";
-    static final String DONE = "data: [DONE]\n\n";
+public final class AgentFixture {
+    public static final String API_KEY = "sk-agent-test";
+    public static final String MODEL = "test-model";
+    public static final String DONE = "data: [DONE]\n\n";
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    final FakeServer server;
-    final InMemoryConversationRepository repository = new InMemoryConversationRepository();
+    public final FakeServer server;
+    public final InMemoryConversationRepository repository = new InMemoryConversationRepository();
 
-    AgentFixture() throws IOException {
+    public AgentFixture() throws IOException {
         this.server = new FakeServer();
     }
 
-    LumiRoseClient client() {
+    public LumiRoseClient client() {
         return LumiRoseClient.builder()
                 .baseUrl(server.baseUrl())
                 .apiKey(API_KEY)
@@ -43,26 +44,26 @@ final class AgentFixture {
                 .build();
     }
 
-    LumiRoseAgent.Builder agent() {
+    public LumiRoseAgent.Builder agent() {
         return agent(ToolContext.builder().build());
     }
 
-    LumiRoseAgent.Builder agent(ToolContext tools) {
+    public LumiRoseAgent.Builder agent(ToolContext tools) {
         return agent(tools, repository);
     }
 
-    LumiRoseAgent.Builder agent(ToolContext tools, ConversationRepository target) {
+    public LumiRoseAgent.Builder agent(ToolContext tools, ConversationRepository target) {
         return LumiRoseAgent.builder()
                 .client(client())
                 .toolContext(tools)
                 .repository(target);
     }
 
-    void close() {
+    public void close() {
         server.close();
     }
 
-    static JsonNode body(FakeServer.RecordedRequest request) {
+    public static JsonNode body(FakeServer.RecordedRequest request) {
         try {
             return JSON.readTree(request.body());
         } catch (IOException e) {
@@ -70,12 +71,12 @@ final class AgentFixture {
         }
     }
 
-    static String chunk(JsonNode delta, String finishReason) {
+    public static String chunk(JsonNode delta, String finishReason) {
         return chunk(delta, finishReason, null, null, null);
     }
 
-    static String chunk(JsonNode delta, String finishReason,
-                        Integer promptTokens, Integer completionTokens, Integer totalTokens) {
+    public static String chunk(JsonNode delta, String finishReason,
+                               Integer promptTokens, Integer completionTokens, Integer totalTokens) {
         ObjectNode choice = JSON.createObjectNode();
         choice.set("delta", delta);
         if (finishReason != null) {
@@ -98,17 +99,17 @@ final class AgentFixture {
         return "data: " + root + "\n\n";
     }
 
-    static ObjectNode emptyDelta() {
+    public static ObjectNode emptyDelta() {
         return JSON.createObjectNode();
     }
 
-    static ObjectNode content(String text) {
+    public static ObjectNode content(String text) {
         ObjectNode delta = JSON.createObjectNode();
         delta.put("content", text);
         return delta;
     }
 
-    static ObjectNode reasoning(String text) {
+    public static ObjectNode reasoning(String text) {
         ObjectNode delta = JSON.createObjectNode();
         delta.put("reasoning_content", text);
         return delta;
@@ -117,22 +118,22 @@ final class AgentFixture {
     /**
      * 一次性返回最终文本的完整 SSE 脚本。
      */
-    static String textReply(String text) {
+    public static String textReply(String text) {
         return chunk(content(text), "stop") + DONE;
     }
 
     /**
      * 带 usage 的最终文本脚本。
      */
-    static String textReply(String text, Integer promptTokens,
-                            Integer completionTokens, Integer totalTokens) {
+    public static String textReply(String text, Integer promptTokens,
+                                   Integer completionTokens, Integer totalTokens) {
         return chunk(content(text), "stop", promptTokens, completionTokens, totalTokens) + DONE;
     }
 
     /**
      * 一轮工具调用脚本；{@code text} 为 {@code null} 时只发 tool_calls。
      */
-    static String toolReply(String text, ToolCallSpec... calls) {
+    public static String toolReply(String text, ToolCallSpec... calls) {
         ObjectNode delta = toolCalls(calls);
         if (text != null) {
             delta.put("content", text);
@@ -140,7 +141,7 @@ final class AgentFixture {
         return chunk(delta, "tool_calls") + DONE;
     }
 
-    static ObjectNode toolCalls(ToolCallSpec... calls) {
+    public static ObjectNode toolCalls(ToolCallSpec... calls) {
         ObjectNode delta = JSON.createObjectNode();
         ArrayNode array = delta.putArray("tool_calls");
         for (int index = 0; index < calls.length; index++) {
@@ -156,7 +157,7 @@ final class AgentFixture {
         return delta;
     }
 
-    static void sleep(long millis) {
+    public static void sleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
@@ -165,7 +166,7 @@ final class AgentFixture {
         }
     }
 
-    static void awaitRequests(FakeServer server, int count, long timeoutMillis) {
+    public static void awaitRequests(FakeServer server, int count, long timeoutMillis) {
         long deadline = System.nanoTime() + timeoutMillis * 1_000_000L;
         while (server.requests().size() < count) {
             if (System.nanoTime() > deadline) {
@@ -175,10 +176,10 @@ final class AgentFixture {
         }
     }
 
-    static final class ToolCallSpec {
-        final String id;
-        final String name;
-        final String arguments;
+    public static final class ToolCallSpec {
+        public final String id;
+        public final String name;
+        public final String arguments;
 
         private ToolCallSpec(String id, String name, String arguments) {
             this.id = id;
@@ -186,7 +187,7 @@ final class AgentFixture {
             this.arguments = arguments;
         }
 
-        static ToolCallSpec of(String id, String name, String arguments) {
+        public static ToolCallSpec of(String id, String name, String arguments) {
             return new ToolCallSpec(id, name, arguments);
         }
     }
@@ -194,12 +195,12 @@ final class AgentFixture {
     /**
      * 统计写次数的仓储装饰器，用于断言“成功只提交一次”。
      */
-    static final class CountingRepository implements ConversationRepository {
+    public static final class CountingRepository implements ConversationRepository {
         private final ConversationRepository delegate;
-        int appends;
-        int compacts;
+        public int appends;
+        public int compacts;
 
-        CountingRepository(ConversationRepository delegate) {
+        public CountingRepository(ConversationRepository delegate) {
             this.delegate = delegate;
         }
 
