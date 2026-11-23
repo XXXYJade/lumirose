@@ -104,9 +104,13 @@ public final class LumiRoseAgent {
         try {
             execute(conversationId, content, result);
         } catch (LumiRoseException e) {
+            logOutcome(conversationId, e);
             throw e;
         } catch (RuntimeException e) {
-            throw new AgentException(LumiRoseErrorCode.INTERNAL_ERROR, "内部错误", e);
+            AgentException wrapped = new AgentException(
+                    LumiRoseErrorCode.INTERNAL_ERROR, "内部错误", e);
+            logOutcome(conversationId, wrapped);
+            throw wrapped;
         }
         return result;
     }
@@ -131,9 +135,24 @@ public final class LumiRoseAgent {
         try {
             execute(conversationId, content, result);
         } catch (LumiRoseException e) {
+            logOutcome(conversationId, e);
             result.fail(e);
         } catch (RuntimeException e) {
-            result.fail(new AgentException(LumiRoseErrorCode.INTERNAL_ERROR, "内部错误", e));
+            AgentException wrapped = new AgentException(
+                    LumiRoseErrorCode.INTERNAL_ERROR, "内部错误", e);
+            logOutcome(conversationId, wrapped);
+            result.fail(wrapped);
+        }
+    }
+
+    /**
+     * 只记录错误码，不记录异常消息或 cause，避免把供应商响应带进日志。
+     */
+    private static void logOutcome(long conversationId, LumiRoseException error) {
+        if (error.getErrorCode() == LumiRoseErrorCode.AGENT_CANCELLED) {
+            log.info("cancel: conversationId={} code={}", conversationId, error.getErrorCode().code());
+        } else {
+            log.error("run failed: conversationId={} code={}", conversationId, error.getErrorCode().code());
         }
     }
 
@@ -141,16 +160,26 @@ public final class LumiRoseAgent {
         if (content == null || content.isBlank()) {
             throw new AgentException(LumiRoseErrorCode.PARAM_INVALID, "content 不能为空");
         }
+        log.info("run start: conversationId={} maxTurns={} maxRetries={}",
+                conversationId, maxTurns, maxRetries);
         Conversation conversation = repository.load(conversationId);
         List<Message> base = new ArrayList<>(conversation.messages());
         Message summary = null;
         boolean compressed = false;
         if (shouldCompress(conversation)) {
+            log.info("compress: conversationId={} contextTokens={} window={} threshold={}",
+                    conversationId, conversation.contextTokens(),
+                    contextWindowTokens, contextCompressionThreshold);
             summary = compress(conversation.messages());
             // 压缩后历史只剩摘要，后续每轮请求都基于它重建。
             base = new ArrayList<>(List.of(summary));
             compressed = true;
+            log.debug("compressed: conversationId={} summaryChars={}",
+                    conversationId, summary.content().length());
         }
+        log.debug("loaded: conversationId={} messages={} contextTokens={} compressed={}",
+                conversationId, conversation.messages().size(),
+                conversation.contextTokens(), compressed);
 
         List<Message> pending = new ArrayList<>();
         pending.add(Message.user(content));
@@ -166,7 +195,11 @@ public final class LumiRoseAgent {
             turn++;
             checkCancelled(result);
             ChatCompletionRequest request = requestFor(base, pending, effectiveSystem);
+            log.debug("request: turn={} messages={} tools={}",
+                    turn, request.messages().size(), request.tools().size());
+            long requestStarted = System.nanoTime();
             ChatCompletionResponse response = requestWithRetry(request, result);
+            long requestMillis = (System.nanoTime() - requestStarted) / 1_000_000L;
             ChatCompletionChoice choice = response.choices().get(0);
             ChatCompletionMessage message = choice.message();
             if (message == null) {
@@ -178,6 +211,10 @@ public final class LumiRoseAgent {
             }
             lastUsage = response.usage();
             FinishReason finishReason = FinishReason.fromWire(choice.finishReason());
+            log.debug("response: turn={} durationMs={} finishReason={} toolCalls={} contentChars={}",
+                    turn, requestMillis, choice.finishReason(),
+                    message.toolCalls() == null ? 0 : message.toolCalls().size(),
+                    text == null ? 0 : text.length());
             if (finishReason == FinishReason.LENGTH) {
                 throw new AgentException(LumiRoseErrorCode.AGENT_OUTPUT_TRUNCATED, "模型输出被截断");
             }
@@ -192,7 +229,19 @@ public final class LumiRoseAgent {
                 for (ChatCompletionToolCall call : message.toolCalls()) {
                     checkCancelled(result);
                     String name = validateToolCall(call);
-                    String toolResult = toolContext.execute(name, call.function().arguments());
+                    log.debug("tool start: name={} turn={}", name, turn);
+                    long toolStarted = System.nanoTime();
+                    String toolResult;
+                    try {
+                        toolResult = toolContext.execute(name, call.function().arguments());
+                    } catch (LumiRoseException e) {
+                        log.error("tool failed: name={} turn={} code={}",
+                                name, turn, e.getErrorCode().code());
+                        throw e;
+                    }
+                    log.debug("tool end: name={} turn={} durationMs={} resultChars={}",
+                            name, turn, (System.nanoTime() - toolStarted) / 1_000_000L,
+                            toolResult == null ? 0 : toolResult.length());
                     pending.add(Message.tool(call.id(), toolResult == null ? "" : toolResult));
                     checkCancelled(result);
                 }
@@ -232,6 +281,8 @@ public final class LumiRoseAgent {
         }
         int promptTokens = lastUsage == null ? 0 : nullSafe(lastUsage.promptTokens());
         int completionTokens = lastUsage == null ? 0 : nullSafe(lastUsage.completionTokens());
+        log.info("run end: conversationId={} turns={} contentChars={} promptTokens={} completionTokens={}",
+                conversationId, turn, allContent.length(), promptTokens, completionTokens);
         result.complete(allContent.toString(), promptTokens, completionTokens);
     }
 
