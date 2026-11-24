@@ -46,3 +46,12 @@ docs/superpowers/.obsidian/
 
 ### docs site ###
 site/
+
+### python toolchain ###
+.venv/
+
+### 本地草稿与临时验证 ###
+scratch/
+
+### 验收账本（本地盘点，不入库） ###
+docs/acceptance/
