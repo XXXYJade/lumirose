@@ -71,16 +71,17 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 | [上下文压缩](docs/v1.1/context-compression.md) | 0.65 触发、摘要、逻辑截断 |
 | [持久化](docs/v1.1/persistence.md) | SPI、ER、SQL 骨架 |
 | [架构总览](docs/v1.1/architecture.md) | 分层、依赖方向、时序 |
-| [关键设计决策](docs/v1.1/design-decisions.md) | 为什么这样取舍 |
+| [关键设计决策](docs/v1.1/design-decisions.md) | 决策索引；全文在 `docs/adr/` |
 | [API 参考](docs/v1.1/reference/api.md) | 公开类型与方法 |
 | [错误码](docs/v1.1/reference/error-codes.md) | 错误语义与处理建议 |
+| [术语表](GLOSSARY.md) | 会话、压缩、交付等概念的唯一说法（仓库根，不进文档站） |
 | [v1 文档（冻结）](https://xxxyjade.github.io/lumirose/v1/) | 同步、非流式、DTO 仓储的旧版 |
 
 内部工程记录保留在仓库中，不进入公开文档站。
 
 ## 状态
 
-当前仓库处于 **v1.1 迁移期**：`docs/` 描述 v1.1 目标规格，代码正在从旧实现迁移到该规格。文档先于代码，是为了让 API、失败语义和持久化边界在实现前可审查。
+v1.1 已按 `docs/` 规格落地：`mvn -o test` 161 个测试通过（1 个跳过）；压缩请求「保留角色结构、不声明 `tools`」这一形状已在 `deepseek-chat` 上冒烟验证。规格、实现与决策记录（`docs/adr/`）现在是同一套口径。
 
 v1.1 明确不做：多 provider、多 Agent、RAG、多模态、Web UI、独立服务端、内置 JDBC/Redis、进程内会话锁、遥测 SPI、结构化输出。
 
