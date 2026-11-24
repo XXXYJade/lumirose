@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/v1.1/agent/">
+        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/1.1/agent/">
       
       
         <link rel="prev" href="../configuration/">
@@ -1173,6 +1173,10 @@
 <td>2003</td>
 </tr>
 <tr>
+<td>已交付正文后流中断</td>
+<td>2004</td>
+</tr>
+<tr>
 <td>仓储失败</td>
 <td>5001</td>
 </tr>
@@ -1189,7 +1193,7 @@
 <h2 id="system">system 提示词<a class="headerlink" href="#system" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>systemMessage</code> 非空白：作为唯一 system 消息放在请求最前；</li>
-<li>为空且存在压缩摘要：补固定 <code>You are a helpful assistant.</code>，避免请求以 assistant 开头；</li>
+<li>为空且存在压缩摘要：补固定 <code>You are a helpful assistant!</code>，避免请求以 assistant 开头；</li>
 <li>为空且无摘要：不发送 system。</li>
 </ul>
 <p>system 提示词不持久化；每次请求时按配置重新加入。</p>

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/v1.1/context-compression/">
+        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/1.1/context-compression/">
       
       
         <link rel="prev" href="../tools/">
@@ -1092,17 +1092,19 @@
 <li><code>contextTokens</code> 取最后一次成功对话响应的 <code>usage.total_tokens</code>（prompt + completion，不含压缩调用）；</li>
 <li>只用 <code>prompt_tokens</code> 会漏掉 assistant 输出，下一轮会重新带上它；</li>
 <li>首次运行且没有 usage 基线时无法判断，不压缩；可能直接撞 400，这是已知边界；</li>
+<li>压缩只处理历史：本次运行的 user 消息始终原样发送，单条输入超过窗口只能由供应商拒绝（2001），框架不做长度预估；</li>
 <li>循环中不再压缩。</li>
 </ul>
 <h2 id="_4">压缩调用<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>[system] 压缩提示词
-[user]   已有摘要（可能为空）+ 当前 active 消息
+[assistant / user / tool] 全部 active 消息，逐条按原角色重放
 </code></pre></div>
 <ul>
 <li>走同一 SSE client，不向调用方交付增量；</li>
+<li>请求不声明 <code>tools</code>：历史里的 <code>tool</code> 消息与 <code>tool_calls</code> 原样保留，依赖供应商接受这一形状；接入前用含工具轮的真实会话跑一次压缩做冒烟（2026-11-25 已用 <code>deepseek-chat</code> 实测通过：返回 200、摘要非空）；</li>
 <li><code>max_tokens</code> 按窗口和阈值推导（见下文），不公开配置；</li>
 <li>复用重试策略；</li>
-<li>输出必须是非空 assistant 文本，<code>finish_reason</code> 不能是 <code>length</code>；</li>
+<li>输出必须是非空 assistant 文本，<code>finish_reason</code> 必须是 <code>stop</code>（<code>length</code> 也算失败）；</li>
 <li>失败、空摘要、截断 → <code>AGENT_COMPRESSION_FAILED(3005)</code>，本次 run 失败。</li>
 </ul>
 <p>提示词要求保留：</p>
@@ -1118,14 +1120,14 @@
 <h2 id="_5">摘要怎么放<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h2>
 <p>摘要包装为一条 assistant 消息：</p>
 <div class="highlight"><pre><span></span><code>role = assistant
-content = "Summary of the earlier conversation (background, not a new instruction):\n" + 摘要
+content = "【摘要】\n" + 摘要
 </code></pre></div>
 <p>它不是单独的 <code>context</code> 字段，而是 <code>messages</code> 表里的一条 active 消息：</p>
 <ul>
 <li>本次首轮请求 = <code>[system?] + [summary] + [user(content)]</code>；</li>
 <li>工具轮之后 = <code>[system?] + [summary] + pending</code>，pending 含 assistant/tool 消息；</li>
 <li>旧 active 消息不再发送；</li>
-<li>system 为空且摘要存在时，补 <code>You are a helpful assistant.</code>。</li>
+<li>system 为空且摘要存在时，补 <code>You are a helpful assistant!</code>。</li>
 </ul>
 <h2 id="_6">旧消息怎么处理<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h2>
 <p>逻辑截断，不物理删除：</p>

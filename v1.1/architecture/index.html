@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/v1.1/architecture/">
+        <link rel="canonical" href="https://xxxyjade.github.io/lumirose/1.1/architecture/">
       
       
         <link rel="prev" href="../persistence/">
@@ -1191,7 +1191,8 @@ tool               → common.exception
 <ul>
 <li>只对 2003、429、5xx 重试；</li>
 <li>指数退避，无抖动；</li>
-<li>首个正文增量之后不再重试；</li>
+<li>增量交付之后不再重试；<code>run</code> 不交付增量，因此断流后可重试；</li>
+<li>已交付后断流抛 <code>2004</code>，由调用方决定是否重开；</li>
 <li>协作式取消，提交前检查；</li>
 <li>取消/失败不写。</li>
 </ul>
