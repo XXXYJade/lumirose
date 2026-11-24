@@ -17,6 +17,7 @@ import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.AGE
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.CLIENT_HTTP_ERROR;
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.CLIENT_IO_ERROR;
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.CLIENT_RESPONSE_INVALID;
+import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.CLIENT_STREAM_INTERRUPTED;
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.CONFIG_INVALID;
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.INTERNAL_ERROR;
 import static io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode.PARAM_INVALID;
@@ -47,6 +48,8 @@ class ErrorCodeTest {
         assertMapping(CLIENT_HTTP_ERROR, new ClientException(CLIENT_HTTP_ERROR, "x"), ClientException.class);
         assertMapping(CLIENT_RESPONSE_INVALID, new ClientException(CLIENT_RESPONSE_INVALID, "x"), ClientException.class);
         assertMapping(CLIENT_IO_ERROR, new ClientException(CLIENT_IO_ERROR, "x"), ClientException.class);
+        assertMapping(CLIENT_STREAM_INTERRUPTED,
+                new ClientException(CLIENT_STREAM_INTERRUPTED, "x"), ClientException.class);
         assertMapping(AGENT_TURN_LIMIT, new AgentException(AGENT_TURN_LIMIT, "x"), AgentException.class);
         assertMapping(AGENT_OUTPUT_TRUNCATED, new AgentException(AGENT_OUTPUT_TRUNCATED, "x"), AgentException.class);
         assertMapping(AGENT_RESPONSE_INVALID, new AgentException(AGENT_RESPONSE_INVALID, "x"), AgentException.class);
@@ -72,6 +75,7 @@ class ErrorCodeTest {
         assertTrue(new ClientException(CLIENT_HTTP_ERROR, 503, "x").retriable());
 
         assertFalse(new ClientException(CLIENT_HTTP_ERROR, "x").retriable());
+        assertFalse(new ClientException(CLIENT_STREAM_INTERRUPTED, "x").retriable());
         assertFalse(new ClientException(CLIENT_HTTP_ERROR, 400, "x").retriable());
         assertFalse(new ClientException(CLIENT_HTTP_ERROR, 401, "x").retriable());
         assertFalse(new ClientException(CLIENT_HTTP_ERROR, 404, "x").retriable());

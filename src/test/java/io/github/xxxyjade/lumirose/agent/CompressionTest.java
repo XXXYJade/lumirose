@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class CompressionTest {
 
-    private static final String SUMMARY_PREFIX = "以下是之前对话的摘要：";
+    private static final String SUMMARY_PREFIX = "【摘要】";
 
     private AgentFixture fixture;
 

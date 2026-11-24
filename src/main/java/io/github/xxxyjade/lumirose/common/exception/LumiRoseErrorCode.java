@@ -15,6 +15,7 @@ public enum LumiRoseErrorCode {
     CLIENT_HTTP_ERROR(2001, "模型请求失败"),
     CLIENT_RESPONSE_INVALID(2002, "模型响应非法"),
     CLIENT_IO_ERROR(2003, "网络请求失败"),
+    CLIENT_STREAM_INTERRUPTED(2004, "流中断"),
     // Agent
     AGENT_TURN_LIMIT(3001, "轮次用尽"),
     AGENT_OUTPUT_TRUNCATED(3002, "模型输出被截断"),

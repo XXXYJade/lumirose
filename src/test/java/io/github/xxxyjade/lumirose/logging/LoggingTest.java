@@ -120,7 +120,9 @@ class LoggingTest {
 
         assertTrue(logs.hasEvent("tool failed", Level.ERROR));
         assertTrue(logs.hasEvent("run failed", Level.ERROR));
+        assertTrue(logs.hasEvent("discard:", Level.WARN));
         assertTrue(logs.allText().contains("4003"));
+        assertTrue(logs.allText().contains("messages=2"));
         assertFalse(logs.allText().contains("参数敏感串"));
     }
 
@@ -142,6 +144,7 @@ class LoggingTest {
         }
 
         assertTrue(logs.awaitEvent("cancel:", Level.INFO, 2000));
+        assertTrue(logs.awaitEvent("discard:", Level.INFO, 2000));
         assertFalse(logs.allText().contains(AgentFixture.API_KEY));
         assertFalse(logs.allText().contains("取消敏感内容"));
     }

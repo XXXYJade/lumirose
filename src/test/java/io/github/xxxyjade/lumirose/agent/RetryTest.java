@@ -119,13 +119,34 @@ class RetryTest {
     }
 
     @Test
-    void doesNotRetryAfterDeltaWasDelivered() {
+    void runRetriesAfterPartialStream() {
         fixture.server.enqueueTruncatedSse(AgentFixture.chunk(AgentFixture.content("a"), null), 64);
         fixture.server.enqueueSse(AgentFixture.textReply("ok"));
 
-        ClientException error = assertThrows(ClientException.class, () -> agent(2).run(1L, "hi"));
+        LumiRoseResult result = agent(2).run(1L, "hi");
 
-        assertEquals(LumiRoseErrorCode.CLIENT_IO_ERROR, error.getErrorCode());
+        // run 不向调用方交付增量，因此断流后重试不会产生重复正文。
+        assertEquals("ok", result.content());
+        assertEquals(2, fixture.server.requests().size());
+        assertEquals(2, fixture.repository.load(1L).messages().size());
+    }
+
+    @Test
+    void streamRunDoesNotRetryAfterDeltaWasDelivered() {
+        fixture.server.enqueueTruncatedSse(AgentFixture.chunk(AgentFixture.content("a"), null), 64);
+        fixture.server.enqueueSse(AgentFixture.textReply("ok"));
+
+        LumiRoseResult result = agent(2).streamRun(1L, "hi");
+        StringBuilder delivered = new StringBuilder();
+
+        ClientException error = assertThrows(ClientException.class, () -> {
+            for (String delta : result.deltas()) {
+                delivered.append(delta);
+            }
+        });
+
+        assertEquals("a", delivered.toString());
+        assertEquals(LumiRoseErrorCode.CLIENT_STREAM_INTERRUPTED, error.getErrorCode());
         assertEquals(1, fixture.server.requests().size());
         assertEquals(0, fixture.repository.load(1L).messages().size());
     }
