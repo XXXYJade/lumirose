@@ -6,6 +6,7 @@ import io.github.xxxyjade.lumirose.common.exception.LumiRoseErrorCode;
 import io.github.xxxyjade.lumirose.common.result.LumiRoseResult;
 import io.github.xxxyjade.lumirose.model.entity.Conversation;
 import io.github.xxxyjade.lumirose.model.entity.Message;
+import io.github.xxxyjade.lumirose.model.entity.ToolCall;
 import io.github.xxxyjade.lumirose.repository.ConversationRepository;
 import io.github.xxxyjade.lumirose.tool.ToolContext;
 import org.junit.jupiter.api.AfterEach;
@@ -207,6 +208,33 @@ class CompressionTest {
         assertEquals("second", loaded.messages().get(1).content());
         assertEquals("A2", loaded.messages().get(2).content());
         assertEquals(900, loaded.contextTokens());
+    }
+
+    @Test
+    void compressionRequestReplaysToolTurnsWithoutDeclaringTools() {
+        fixture.repository.append(1L, List.of(
+                Message.user("读 a.txt 告诉我端口"),
+                Message.assistant("", null,
+                        List.of(new ToolCall("call_1", "function", "read_file",
+                                "{\"path\":\"a.txt\"}"))),
+                Message.tool("call_1", "port: 8080")),
+                3000);
+        fixture.server.enqueueSse(AgentFixture.textReply("SUMMARY"));
+        fixture.server.enqueueSse(AgentFixture.textReply("done", 10, 5, 15));
+
+        agent(4000, fixture.repository).build().run(1L, "端口是多少");
+
+        JsonNode compression = AgentFixture.body(fixture.server.requests().get(0));
+        // 压缩请求保留原生角色结构，但不声明 tools；这条依赖供应商接受。
+        assertFalse(compression.has("tools"));
+        JsonNode messages = compression.get("messages");
+        assertEquals(4, messages.size());
+        assertEquals("system", messages.get(0).get("role").asText());
+        assertEquals("user", messages.get(1).get("role").asText());
+        assertEquals("assistant", messages.get(2).get("role").asText());
+        assertEquals("call_1", messages.get(2).get("tool_calls").get(0).get("id").asText());
+        assertEquals("tool", messages.get(3).get("role").asText());
+        assertEquals("call_1", messages.get(3).get("tool_call_id").asText());
     }
 
     private void seed(long conversationId, int contextTokens) {
