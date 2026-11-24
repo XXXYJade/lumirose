@@ -29,7 +29,7 @@ contextWindowTokens != null
 ```
 
 - 走同一 SSE client，不向调用方交付增量；
-- 请求不声明 `tools`：历史里的 `tool` 消息与 `tool_calls` 原样保留，依赖供应商接受这一形状；接入前用含工具轮的真实会话跑一次压缩做冒烟；
+- 请求不声明 `tools`：历史里的 `tool` 消息与 `tool_calls` 原样保留，依赖供应商接受这一形状；接入前用含工具轮的真实会话跑一次压缩做冒烟（2026-11-25 已用 `deepseek-chat` 实测通过：返回 200、摘要非空）；
 - `max_tokens` 按窗口和阈值推导（见下文），不公开配置；
 - 复用重试策略；
 - 输出必须是非空 assistant 文本，`finish_reason` 必须是 `stop`（`length` 也算失败）；
