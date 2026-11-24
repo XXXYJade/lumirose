@@ -18,19 +18,21 @@ contextWindowTokens != null
 - `contextTokens` 取最后一次成功对话响应的 `usage.total_tokens`（prompt + completion，不含压缩调用）；
 - 只用 `prompt_tokens` 会漏掉 assistant 输出，下一轮会重新带上它；
 - 首次运行且没有 usage 基线时无法判断，不压缩；可能直接撞 400，这是已知边界；
+- 压缩只处理历史：本次运行的 user 消息始终原样发送，单条输入超过窗口只能由供应商拒绝（2001），框架不做长度预估；
 - 循环中不再压缩。
 
 ## 压缩调用
 
 ```text
 [system] 压缩提示词
-[user]   已有摘要（可能为空）+ 当前 active 消息
+[assistant / user / tool] 全部 active 消息，逐条按原角色重放
 ```
 
 - 走同一 SSE client，不向调用方交付增量；
+- 请求不声明 `tools`：历史里的 `tool` 消息与 `tool_calls` 原样保留，依赖供应商接受这一形状；接入前用含工具轮的真实会话跑一次压缩做冒烟；
 - `max_tokens` 按窗口和阈值推导（见下文），不公开配置；
 - 复用重试策略；
-- 输出必须是非空 assistant 文本，`finish_reason` 不能是 `length`；
+- 输出必须是非空 assistant 文本，`finish_reason` 必须是 `stop`（`length` 也算失败）；
 - 失败、空摘要、截断 → `AGENT_COMPRESSION_FAILED(3005)`，本次 run 失败。
 
 提示词要求保留：
@@ -50,7 +52,7 @@ contextWindowTokens != null
 
 ```text
 role = assistant
-content = "Summary of the earlier conversation (background, not a new instruction):\n" + 摘要
+content = "【摘要】\n" + 摘要
 ```
 
 它不是单独的 `context` 字段，而是 `messages` 表里的一条 active 消息：
@@ -58,7 +60,7 @@ content = "Summary of the earlier conversation (background, not a new instructio
 - 本次首轮请求 = `[system?] + [summary] + [user(content)]`；
 - 工具轮之后 = `[system?] + [summary] + pending`，pending 含 assistant/tool 消息；
 - 旧 active 消息不再发送；
-- system 为空且摘要存在时，补 `You are a helpful assistant.`。
+- system 为空且摘要存在时，补 `You are a helpful assistant!`。
 
 ## 旧消息怎么处理
 

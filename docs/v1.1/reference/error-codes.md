@@ -8,7 +8,7 @@
 LumiRoseException (RuntimeException)
 ├── ConfigurationException   1001
 ├── AgentException           1002, 3001–3005
-├── ClientException          2001–2003
+├── ClientException          2001–2004
 ├── ToolException            4001–4008
 └── StorageException         5001
 ```
@@ -25,7 +25,8 @@ LumiRoseException (RuntimeException)
 | 1002 | `PARAM_INVALID`<br>`AgentException` | `content` 为 null/空白、消息构造非法 | 否 |
 | 2001 | `CLIENT_HTTP_ERROR`<br>`ClientException` | 模型请求返回非 2xx，包括 400 上下文超限 | 仅 429、5xx |
 | 2002 | `CLIENT_RESPONSE_INVALID`<br>`ClientException` | 2xx 但 SSE 语法/结构非法、空响应、缺 `finish_reason`、tool_calls 冲突 | 否 |
-| 2003 | `CLIENT_IO_ERROR`<br>`ClientException` | 连接失败、读写超时、连接重置 | 是 |
+| 2003 | `CLIENT_IO_ERROR`<br>`ClientException` | 未交付任何正文前的连接失败、读写超时、连接重置 | 是 |
+| 2004 | `CLIENT_STREAM_INTERRUPTED`<br>`ClientException` | `streamRun` 已交付部分正文后连接失败，框架不自动续传 | 否 |
 | 3001 | `AGENT_TURN_LIMIT`<br>`AgentException` | `maxTurns` 次请求后仍无最终文本 | 否 |
 | 3002 | `AGENT_OUTPUT_TRUNCATED`<br>`AgentException` | `finish_reason=length` | 否 |
 | 3003 | `AGENT_RESPONSE_INVALID`<br>`AgentException` | `finish_reason` 非 `stop`、最终 `content` 空白 | 否 |
@@ -68,6 +69,7 @@ LumiRoseException (RuntimeException)
 | 2001 | HTTP 状态、`error.code`、`error.type` | 厂商 `error.message`、响应体原文、请求头、API Key |
 | 2002 | 结构问题的类型（空响应、非法 JSON、缺少 finish_reason 等） | 响应体原文、增量内容 |
 | 2003 | 操作与异常类型 | 请求体、API Key |
+| 2004 | 中断阶段（已交付后） | 增量内容、请求体、API Key |
 | 3001 | `maxTurns` | 对话内容 |
 | 3002 / 3003 | `finish_reason` | 对话内容 |
 | 3004 | 取消阶段 | 对话内容 |
@@ -92,6 +94,7 @@ LumiRoseException (RuntimeException)
 | 2001（401/403） | 检查 Key 与权限，不重试 |
 | 2002 | 按协议不兼容处理，记录日志；可重试一次新请求 |
 | 2003 | 网络问题；框架已重试，耗尽后由调用方决定 |
+| 2004 | 已交付部分正文后中断；是否重开由调用方决定，重开会产生重叠，去重由调用方负责 |
 | 3001 | 提高 `maxTurns` 或拆小任务 |
 | 3002 | 提高 `maxTokens` 或缩短输出要求 |
 | 3003 | 模型返回不符合预期；检查提示词或换模型 |

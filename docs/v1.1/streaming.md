@@ -85,12 +85,12 @@ result.cancel();
 
 ## 重试边界
 
-只能在该轮尚未收到任何正文增量、且尚未收到 `finish_reason` 前重试。
+判据是「增量是否已经交付给调用方」，而不是「客户端是否收到过增量」。
 
-- 首个增量之前失败：按 `maxRetries` 退避重试；
-- 已经收到增量：不再重试，直接抛错；
-- 重试不重复执行工具，不计入 `maxTurns`；
-- `run` 与 `streamRun` 同口径。
+- `run` 不交付增量：断流后按 `maxRetries` 退避重试，不会产生重复正文；
+- `streamRun` 已交付增量后不再重试，抛 `CLIENT_STREAM_INTERRUPTED(2004)`；
+- 未交付任何正文前的失败，按 `retriable()` 分类重试；
+- 重试不重复执行工具，不计入 `maxTurns`。
 
 ## reasoning 与工具事件
 

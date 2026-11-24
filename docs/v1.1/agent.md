@@ -100,6 +100,7 @@ for (String delta : result.deltas()) {
 | 压缩失败 | 3005 |
 | 模型请求失败 | 2001 |
 | 网络失败 | 2003 |
+| 已交付正文后流中断 | 2004 |
 | 仓储失败 | 5001 |
 
 完整列表见 [错误码](reference/error-codes.md)。
@@ -115,7 +116,7 @@ for (String delta : result.deltas()) {
 ## system 提示词
 
 - `systemMessage` 非空白：作为唯一 system 消息放在请求最前；
-- 为空且存在压缩摘要：补固定 `You are a helpful assistant.`，避免请求以 assistant 开头；
+- 为空且存在压缩摘要：补固定 `You are a helpful assistant!`，避免请求以 assistant 开头；
 - 为空且无摘要：不发送 system。
 
 system 提示词不持久化；每次请求时按配置重新加入。
