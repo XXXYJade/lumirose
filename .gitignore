@@ -51,9 +51,6 @@ site-v1/
 ### 本地草稿与临时验证 ###
 scratch/
 
-### 验收账本（本地盘点，不入库） ###
-docs/acceptance/
-
 ### 工程记录（仅本地，不入库、不上公开站） ###
 docs/adr/
 docs/v1.1/requirements/
