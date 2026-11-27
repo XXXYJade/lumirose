@@ -1289,7 +1289,7 @@
 <span class="n">LumiRoseResult</span><span class="w"> </span><span class="nf">streamRun</span><span class="p">(</span><span class="kt">long</span><span class="w"> </span><span class="n">conversationId</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">);</span>
 </code></pre></div>
 <ul>
-<li><code>conversationId</code> 由调用方提供，必须非空；框架不生成 id。</li>
+<li><code>conversationId</code> 是调用方提供的 <code>long</code> 原始类型（无 null 可能），框架不生成也不返回 id，不校验取值范围。</li>
 <li><code>content</code> 为 null/空白 → <code>PARAM_INVALID(1002)</code>。</li>
 <li><code>run</code> 返回已完成结果；<code>streamRun</code> 返回 pending 结果。</li>
 <li>Agent 无可变状态，同一实例可跨线程复用。</li>

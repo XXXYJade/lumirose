@@ -1045,7 +1045,7 @@
 <li><code>run</code>：同步返回已完成结果；SSE 在内部消费完；<code>deltas()</code> 为空。</li>
 <li><code>streamRun</code>：返回未完成结果；第一次迭代 <code>deltas()</code> 时启动虚拟线程；消费完才填充 <code>content()</code> 和 usage。</li>
 </ul>
-<p><code>conversationId</code> 由调用方提供，必须非空；<code>content</code> 为 null 或空白 → <code>PARAM_INVALID(1002)</code>。</p>
+<p><code>conversationId</code> 是调用方提供的 <code>long</code> 原始类型（无 null 可能），框架不校验其取值范围；<code>content</code> 为 null 或空白 → <code>PARAM_INVALID(1002)</code>。</p>
 <h2 id="_2">一次运行的步骤<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>1. load(id) -&gt; active messages + contextTokens
 2. contextTokens &gt; window * contextCompressionThreshold ? 压缩 : 不压缩
