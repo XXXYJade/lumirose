@@ -46,6 +46,7 @@ docs/superpowers/.obsidian/
 
 ### docs site ###
 site/
+site-v1/
 
 ### python toolchain ###
 .venv/
