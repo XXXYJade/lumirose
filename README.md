@@ -10,6 +10,29 @@
 - 可替换持久化：只依赖 `ConversationRepository` SPI；内置内存实现，JDBC 由接入方实现。
 - Java 21、OkHttp、Jackson、SLF4J；`mvn -o test` 离线运行。
 
+## 安装
+
+由 JitPack 按 tag 构建，需要 JDK 21。
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+```
+
+```xml
+<dependency>
+    <groupId>com.github.XXXYJade</groupId>
+    <artifactId>lumirose</artifactId>
+    <version>1.1.0</version>
+</dependency>
+```
+
+不想加仓库时，`git clone` 后 `mvn -o install` 装到本地也一样。
+
 ## 最小示例
 
 ```java
