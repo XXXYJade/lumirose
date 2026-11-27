@@ -12,7 +12,7 @@ LumiRoseResult streamRun(long conversationId, String content);
 - `run`：同步返回已完成结果；SSE 在内部消费完；`deltas()` 为空。
 - `streamRun`：返回未完成结果；第一次迭代 `deltas()` 时启动虚拟线程；消费完才填充 `content()` 和 usage。
 
-`conversationId` 由调用方提供，必须非空；`content` 为 null 或空白 → `PARAM_INVALID(1002)`。
+`conversationId` 是调用方提供的 `long` 原始类型（无 null 可能），框架不校验其取值范围；`content` 为 null 或空白 → `PARAM_INVALID(1002)`。
 
 ## 一次运行的步骤
 

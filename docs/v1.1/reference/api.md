@@ -91,7 +91,7 @@ LumiRoseResult run(long conversationId, String content);
 LumiRoseResult streamRun(long conversationId, String content);
 ```
 
-- `conversationId` 由调用方提供，必须非空；框架不生成 id。
+- `conversationId` 是调用方提供的 `long` 原始类型（无 null 可能），框架不生成也不返回 id，不校验取值范围。
 - `content` 为 null/空白 → `PARAM_INVALID(1002)`。
 - `run` 返回已完成结果；`streamRun` 返回 pending 结果。
 - Agent 无可变状态，同一实例可跨线程复用。

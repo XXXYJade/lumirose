@@ -38,7 +38,7 @@ SPI 全称 **Service Provider Interface**（服务提供者接口）。它描述
 
 | 字段 | 属于 | 含义 | 谁生成 |
 |---|---|---|---|
-| `Conversation.id` | 领域 / 数据库 | 会话标识，`load/append/compact` 的入参 | 调用方，必须非空 |
+| `Conversation.id` | 领域 / 数据库 | 会话标识，`load/append/compact` 的入参 | 调用方提供，`long` 原始类型（无 null） |
 | `Message.id` | 不存在 | 消息行标识只在 `MessageDO.id` | 数据库 |
 | `ToolCall.id` | 协议 | 模型返回的 tool call id（如 `call_1`），用于和 tool 消息配对 | 模型 |
 | `Message.toolCallId` | 协议 | `role=tool` 消息对应的 tool call id | Agent 从 `ToolCall.id` 复制 |

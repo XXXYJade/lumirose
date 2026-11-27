@@ -81,7 +81,7 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 
 ## 状态
 
-v1.1 已按 `docs/` 规格落地：`mvn -o test` 161 个测试通过（1 个跳过）；压缩请求「保留角色结构、不声明 `tools`」这一形状已在 `deepseek-chat` 上冒烟验证。规格、实现与决策记录（`docs/adr/`）现在是同一套口径。
+v1.1 实现已完成，验收核对进行中：`mvn -o test` 161 个用例：160 通过、1 跳过（符号链接用例需创建链接权限，管理员下已验证；见 `docs/v1.1/testing/v1.1.md` §A17）；压缩请求「保留角色结构、不声明 `tools`」这一形状已在 `deepseek-chat` 上冒烟验证。规格、实现与决策记录（`docs/adr/`）现在是同一套口径。
 
 v1.1 明确不做：多 provider、多 Agent、RAG、多模态、Web UI、独立服务端、内置 JDBC/Redis、进程内会话锁、遥测 SPI、结构化输出。
 
