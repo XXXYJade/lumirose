@@ -51,8 +51,10 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.superfences
 
+exclude_docs: |
+  requirements.md
+
 nav:
   - 首页: index.md
   - 快速开始: quickstart.md
   - API: api.md
-  - 需求（冻结）: requirements.md

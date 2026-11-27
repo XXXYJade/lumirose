@@ -64,7 +64,7 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 
 **核心链路** — [Agent 与结果](agent.md) · [流式输出](streaming.md) · [工具](tools.md) · [上下文压缩](context-compression.md) · [持久化](persistence.md)
 
-**架构与参考** — [架构总览](architecture.md) · [关键设计决策](design-decisions.md) · [API 参考](reference/api.md) · [错误码](reference/error-codes.md)
+**架构与参考** — [架构总览](architecture.md) · [API 参考](reference/api.md) · [错误码](reference/error-codes.md)
 
 公开文档只覆盖接入、实现和公开契约；内部工程记录保留在仓库中，不进入站点导航。
 

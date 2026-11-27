@@ -68,6 +68,6 @@ System.out.println(answer);
 
 - [快速开始](quickstart.md)
 - [API 参考](api.md)
-- [v1 需求（冻结）](requirements.md)
+- 需求文档仅本地保留，不随文档站发布。
 
 当前主线：[LumiRose v1.1](https://xxxyjade.github.io/lumirose/v1.1/)

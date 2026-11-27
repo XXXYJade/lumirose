@@ -147,4 +147,4 @@ try {
 - 没有内置数据库实现；内存仓储重启即丢。
 - 同一会话并发 `run` 可能互相覆盖，调用方需保证单写者。
 
-下一步：[API 参考](api.md) · [v1 需求](requirements.md) · 切换到 [v1.1](https://xxxyjade.github.io/lumirose/v1.1/)
+下一步：[API 参考](api.md) · 切换到 [v1.1](https://xxxyjade.github.io/lumirose/v1.1/)

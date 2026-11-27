@@ -119,4 +119,4 @@ LumiRoseAgent.run/streamRun
 - 没有 `RunResult` / `MetricsRecorder` / `runResult()`：结果统一为 `LumiRoseResult`，日志用 SLF4J。
 - 没有进程内会话锁：并发由调用方和仓储承担。
 
-这些取舍见 [关键设计决策](design-decisions.md)。
+这些取舍见本地决策记录（仅本地保留，不入仓库）。
