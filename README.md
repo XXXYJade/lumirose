@@ -103,6 +103,7 @@ System.out.println(result.promptTokens() + " / " + result.completionTokens());
 | [API 参考](docs/v1.1/reference/api.md) | 公开类型与方法 |
 | [错误码](docs/v1.1/reference/error-codes.md) | 错误语义与处理建议 |
 | [术语表](GLOSSARY.md) | 会话、压缩、交付等概念的唯一说法（仓库根，不进文档站） |
+| [版本命名](VERSIONING.md) | tag 格式、pom 一致性、JitPack 自检与历史标签对照（仓库根，不进文档站） |
 | [v1 文档（冻结）](https://xxxyjade.github.io/lumirose/v1/) | 同步、非流式、DTO 仓储的旧版 |
 
 工程记录（需求、测试账本、ADR、决策索引）只保存在本地，不入仓库、也不进公开文档站；仓库与站点只保留接入文档。
