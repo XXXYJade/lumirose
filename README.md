@@ -12,7 +12,7 @@
 
 ## 安装
 
-需要 JDK 21。当前版本 `1.1.0`，对应 commit `49cd471b6c`。
+需要 JDK 21。当前版本 `1.1.1`。
 
 ```xml
 <repositories>
@@ -27,11 +27,11 @@
 <dependency>
     <groupId>com.github.XXXYJade</groupId>
     <artifactId>lumirose</artifactId>
-    <version>49cd471b6c</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 
-这里用 commit 号而不是 `1.1.0`：GitHub 上的 `1.1.0` tag 存在，但 JitPack 对该版本名一直返回 404（其索引侧问题），commit 号指向的代码与 `1.1.0` 完全一致。等索引恢复正常后会把版本号换回来。
+这里的版本号是 `1.1.1` 而不是 `1.1.0`：GitHub 上的 `1.1.0` tag 存在，但 JitPack 对那个版本名的查询永久返回 404（服务端索引侧问题，无法从仓库侧修复）。`1.1.1` 与 `1.1.0` 是同一份源代码，只是换了一个能被解析的版本名。版本命名的完整规则与历史标签说明见 [VERSIONING.md](VERSIONING.md)。
 
 两点容易踩的：
 - `groupId` 是 `com.github.XXXYJade`，这是 JitPack 对 GitHub 仓库的固定规则；Java 包名是 `io.github.xxxyjade.*`，两者不一致属于正常，不要照包名去写 groupId。
