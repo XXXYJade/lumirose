@@ -12,7 +12,7 @@
 
 ## 安装
 
-由 JitPack 按 tag 构建，需要 JDK 21。
+需要 JDK 21。当前版本 `1.1.0`，对应 commit `49cd471b6c`。
 
 ```xml
 <repositories>
@@ -27,9 +27,15 @@
 <dependency>
     <groupId>com.github.XXXYJade</groupId>
     <artifactId>lumirose</artifactId>
-    <version>1.1.0</version>
+    <version>49cd471b6c</version>
 </dependency>
 ```
+
+这里用 commit 号而不是 `1.1.0`：GitHub 上的 `1.1.0` tag 存在，但 JitPack 对该版本名一直返回 404（其索引侧问题），commit 号指向的代码与 `1.1.0` 完全一致。等索引恢复正常后会把版本号换回来。
+
+两点容易踩的：
+- `groupId` 是 `com.github.XXXYJade`，这是 JitPack 对 GitHub 仓库的固定规则；Java 包名是 `io.github.xxxyjade.*`，两者不一致属于正常，不要照包名去写 groupId。
+- 本机 Maven `settings.xml` 里若有 `mirrorOf` 为 `*` 的镜像（阿里云、华为等），会把 `jitpack.io` 一并劫持成「找不到构件」。需要给 jitpack 单独放行，或临时用一个干净的 `settings.xml`。
 
 不想加仓库时，`git clone` 后 `mvn -o install` 装到本地也一样。
 
